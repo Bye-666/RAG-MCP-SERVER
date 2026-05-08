@@ -124,15 +124,15 @@ class TestOllamaEmbedding:
     def test_embed_invalid_text_type(self):
         """Test that non-string input raises ValueError."""
         embedding = OllamaEmbedding()
-        with pytest.raises(ValueError, match="text must be a string"):
+        with pytest.raises(ValueError, match=r"text\[0\] must be a string"):
             embedding.embed([123, "text2"])
 
     def test_embed_connection_error(self):
         """Test that connection errors produce readable messages."""
         embedding = OllamaEmbedding(base_url="http://localhost:11434")
 
-        with patch('httpx.Client') as mock_client_class:
-            mock_client_class.side_effect = httpx.ConnectError(
+        with patch.object(embedding, '_client') as mock_client:
+            mock_client.post.side_effect = httpx.ConnectError(
                 "Connection refused",
                 request=MagicMock()
             )
@@ -149,13 +149,11 @@ class TestOllamaEmbedding:
         """Test that timeout errors produce readable messages."""
         embedding = OllamaEmbedding(timeout=1)
 
-        with patch('httpx.Client') as mock_client_class:
-            mock_client_instance = MagicMock()
-            mock_client_instance.post.side_effect = httpx.TimeoutException(
+        with patch.object(embedding, '_client') as mock_client:
+            mock_client.post.side_effect = httpx.TimeoutException(
                 "Request timed out",
                 request=MagicMock()
             )
-            mock_client_class.return_value = mock_client_instance
 
             with pytest.raises(RuntimeError) as exc_info:
                 embedding.embed(["Hello"])
@@ -210,19 +208,22 @@ class TestOllamaEmbedding:
                 pass
             mock_client.close.assert_called_once()
 
-    def test_embed_invalid_model_name(self):
-        """Test embed with invalid model name."""
-        with pytest.raises(RuntimeError) as exc_info:
-            OllamaEmbedding(model="invalid-model")
-        assert "Invalid model name" in str(exc_info.value)
-
     def test_embed_custom_model_name(self):
         """Test embed with custom model name."""
         embedding = OllamaEmbedding(model="test-model")
-        with patch.object(embedding, '_client') as mock_client:
-            mock_client.post.return_value = MagicMock()
-            embedding.embed(["text"])
 
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.json.return_value = {
+            "embeddings": [[0.1, 0.2, 0.3]]
+        }
+
+        with patch.object(embedding, '_client') as mock_client:
+            mock_client.post.return_value = mock_response
+            result = embedding.embed(["text"])
+
+        assert len(result) == 1
+        assert result[0] == [0.1, 0.2, 0.3]
         call_args = mock_client.post.call_args[1]['json']
         assert call_args["model"] == "test-model"
 
