@@ -78,7 +78,7 @@
 | C6 | MetadataEnricher | [x] | 2026/05/09 | 21 tests passed |
 | C7 | ImageCaptioner | [x] | 2026/05/09 | 14 tests passed |
 | C8 | DenseEncoder | [x] | 2026/05/09 | 12 tests passed |
-| C9 | SparseEncoder | [ ] | | |
+| C9 | SparseEncoder | [x] | 2026/05/09 | 21 tests passed |
 | C10 | BatchProcessor | [ ] | | |
 | C11 | BM25Indexer（倒排索引+IDF计算） | [ ] | | |
 | C12 | VectorUpserter（幂等upsert） | [ ] | | |
