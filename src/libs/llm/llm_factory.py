@@ -86,6 +86,9 @@ LLMFactory.register_provider("azure", AzureLLM)
 LLMFactory.register_provider("deepseek", DeepSeekLLM)
 LLMFactory.register_provider("ollama", OllamaLLM)
 
-# Vision LLM providers will be registered when their modules are imported
-# Example: from .azure_vision_llm import AzureVisionLLM
-#          LLMFactory.register_vision_provider("azure", AzureVisionLLM)
+# Register Vision LLM providers
+try:
+    from .azure_vision_llm import AzureVisionLLM
+    LLMFactory.register_vision_provider("azure", AzureVisionLLM)
+except ImportError:
+    pass  # Azure Vision dependencies not available
