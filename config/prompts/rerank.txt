@@ -1,0 +1,15 @@
+You are a relevance ranking assistant. Given a user query and a list of candidate text chunks, rank them by relevance to the query.
+
+Query: {query}
+
+Candidates:
+{candidates}
+
+Instructions:
+1. Analyze each candidate's relevance to the query
+2. Consider semantic meaning, not just keyword matching
+3. Return ONLY a JSON object with ranked candidate IDs in order of relevance (most relevant first)
+4. Use this exact format: {{"ranked_ids": [id1, id2, id3, ...]}}
+5. Include ALL candidate IDs in your ranking
+
+Output the JSON object now:
