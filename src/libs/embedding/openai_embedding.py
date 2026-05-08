@@ -1,8 +1,6 @@
 from typing import List
 from .base_embedding import BaseEmbedding
-import openai
 from openai import OpenAI
-import numpy as np
 
 class OpenAIEmbedding(BaseEmbedding):
     def __init__(self, api_key: str, model: str = "text-embedding-3-small", **kwargs):
@@ -36,17 +34,17 @@ class OpenAIEmbedding(BaseEmbedding):
                 batch_embeddings = [[float(x) for x in item.embedding] for item in response.data]
 
                 # 为原始批次中的每个文本分配embedding（空文本使用零向量）
-                original_idx = 0
-                for j, text in enumerate(batch):
+                embedding_idx = 0
+                for text in batch:
                     if text.strip():  # 非空文本
-                        embeddings.append(batch_embeddings[original_idx])
-                        original_idx += 1
+                        embeddings.append(batch_embeddings[embedding_idx])
+                        embedding_idx += 1
                     else:  # 空文本
                         # 根据模型决定向量维数
                         dim = 1536 if "3-small" in self.model else 3072 if "3-large" in self.model else 1536
                         embeddings.append([0.0] * dim)
             except Exception as e:
-                # 如果API调用失败，返回零向量
+                # 如果API调用失败，为当前批次的所有文本返回零向量
                 print(f"Error calling OpenAI API: {str(e)}")
                 dim = 1536 if "3-small" in self.model else 3072 if "3-large" in self.model else 1536
                 embeddings.extend([[0.0] * dim for _ in range(len(batch))])

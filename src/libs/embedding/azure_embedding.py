@@ -1,8 +1,6 @@
 from typing import List
 from .base_embedding import BaseEmbedding
-import openai
 from openai import AzureOpenAI
-import numpy as np
 
 class AzureEmbedding(BaseEmbedding):
     def __init__(self, api_key: str, azure_endpoint: str, deployment_name: str, api_version: str = "2024-02-01", **kwargs):
@@ -41,16 +39,16 @@ class AzureEmbedding(BaseEmbedding):
                 batch_embeddings = [[float(x) for x in item.embedding] for item in response.data]
 
                 # 为原始批次中的每个文本分配embedding（空文本使用零向量）
-                original_idx = 0
-                for j, text in enumerate(batch):
+                embedding_idx = 0
+                for text in batch:
                     if text.strip():  # 非空文本
-                        embeddings.append(batch_embeddings[original_idx])
-                        original_idx += 1
+                        embeddings.append(batch_embeddings[embedding_idx])
+                        embedding_idx += 1
                     else:  # 空文本
                         # Azure默认维度通常是1536，但可以配置为不同的模型
                         embeddings.append([0.0] * 1536)
             except Exception as e:
-                # 如果API调用失败，返回零向量
+                # 如果API调用失败，为当前批次的所有文本返回零向量
                 print(f"Error calling Azure OpenAI API: {str(e)}")
                 embeddings.extend([[0.0] * 1536 for _ in range(len(batch))])
 
