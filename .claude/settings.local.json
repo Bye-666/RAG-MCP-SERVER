@@ -7,7 +7,9 @@
       "Bash(python .claude/skills/auto-coder/scripts/sync_spec.py)",
       "Bash(python .claude/skills/auto-coder/scripts/sync_spec.py --force)",
       "Bash(git add *)",
-      "Bash(python -m pytest tests/unit/test_ollama_embedding.py -v)"
+      "Bash(python -m pytest tests/unit/test_ollama_embedding.py -v)",
+      "Bash(./.venv/Scripts/python.exe .claude/skills/auto-coder/scripts/sync_spec.py)",
+      "Bash(python -m pytest tests/unit/test_recursive_splitter_lib.py -v)"
     ]
   }
 }
