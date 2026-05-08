@@ -1985,8 +1985,8 @@ dashboard:
 | C3 | Loader 抽象基类与 PDF Loader | [x] | 2026/05/08 | 12 tests passed |
 | C4 | Splitter 集成（调用 Libs） | [x] | 2026/05/08 | 15 tests passed |
 | C5 | Transform 基类 + ChunkRefiner | [x] | 2026/05/08 | 22 unit tests + 5 integration tests passed |
-| C6 | MetadataEnricher | [ ] | | |
-| C7 | ImageCaptioner | [ ] | | |
+| C6 | MetadataEnricher | [x] | 2026/05/09 | 21 tests passed |
+| C7 | ImageCaptioner | [x] | 2026/05/09 | 14 tests passed |
 | C8 | DenseEncoder | [ ] | | |
 | C9 | SparseEncoder | [ ] | | |
 | C10 | BatchProcessor | [ ] | | |
