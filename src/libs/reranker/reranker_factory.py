@@ -35,6 +35,14 @@ class RerankerFactory:
 
             return reranker_class(llm=llm, prompt_path=prompt_path)
 
+        # Special handling for Cross-Encoder reranker which needs model configuration
+        if provider == 'cross_encoder':
+            reranker_settings = settings.get('reranker', {})
+            model_name = reranker_settings.get('model', 'cross-encoder/ms-marco-MiniLM-L-6-v2')
+            timeout = reranker_settings.get('timeout')
+
+            return reranker_class(model_name=model_name, timeout=timeout)
+
         return reranker_class()
 
 
@@ -44,3 +52,10 @@ try:
     RerankerFactory.register_provider("llm", LLMReranker)
 except ImportError:
     pass  # LLM dependencies not available
+
+# Register Cross-Encoder reranker
+try:
+    from .cross_encoder_reranker import CrossEncoderReranker
+    RerankerFactory.register_provider("cross_encoder", CrossEncoderReranker)
+except ImportError:
+    pass  # sentence-transformers not available
