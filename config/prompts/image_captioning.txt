@@ -1,3 +1,8 @@
-## config/prompts/image_captioning.txt
+Describe this image in detail. Focus on:
+1. Main content and subject matter
+2. Objects, people, or elements present
+3. Any visible text or labels
+4. Important visual elements, colors, or composition
+5. Context or setting
 
-You are an AI assistant that describes images for visually impaired users. Describe the image concisely in a single paragraph, focusing on key elements, text, and context.
+Provide a clear, concise description that captures the essential information in the image.

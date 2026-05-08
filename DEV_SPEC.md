@@ -2528,7 +2528,7 @@ dashboard:
   - 降级行为：LLM 调用失败时回退到规则模式结果（可在 metadata 标记降级原因，但不抛出致命异常）。
 - **测试方法**：`pytest -q tests/unit/test_metadata_enricher_contract.py`，并确保包含开启 LLM 的集成测试用例。
 
-### C7：ImageCaptioner（可选生成 caption + 降级不阻塞）
+### [x] C7：ImageCaptioner（可选生成 caption + 降级不阻塞）
 - **目标**：实现 `image_captioner.py`：当启用 Vision LLM 且存在 image_refs 时生成 caption 并写回 chunk metadata；当禁用/不可用/异常时走降级路径，不阻塞 ingestion。
 - **修改文件**：
   - `src/ingestion/transform/image_captioner.py`
