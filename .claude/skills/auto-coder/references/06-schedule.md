@@ -607,7 +607,7 @@
     - 集成测试：验证系统可用性
     - 两者互补，缺一不可
 
-### C6：MetadataEnricher（规则增强 + 可选 LLM 增强 + 降级）
+### [x] C6：MetadataEnricher（规则增强 + 可选 LLM 增强 + 降级）
 - **目标**：实现元数据增强模块：提供规则增强的默认实现，并重点支持 LLM 增强（配置已就绪，LLM 开关打开）。利用 LLM 对 chunk 进行高质量的 title 生成、summary 摘要和 tags 提取。同时保留失败降级机制，确保不阻塞 ingestion。
 - **修改文件**：
   - `src/ingestion/transform/metadata_enricher.py`

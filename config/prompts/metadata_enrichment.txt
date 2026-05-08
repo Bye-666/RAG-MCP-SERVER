@@ -1,0 +1,17 @@
+You are a metadata extraction expert. Analyze the following text chunk and generate high-quality metadata.
+
+Text:
+{text}
+
+Generate a JSON object with the following fields:
+- "title": A concise, descriptive title that captures the main topic (max 100 characters)
+- "summary": A brief summary of the key points and main content (max 200 characters)
+- "tags": A list of 3-5 relevant keywords or topics that best describe this content
+
+Guidelines:
+- The title should be specific and informative, not generic
+- The summary should highlight the most important information
+- Tags should be lowercase, single words or short phrases
+- Focus on technical terms, concepts, and key entities mentioned in the text
+
+Output only valid JSON, no additional text or explanation.
