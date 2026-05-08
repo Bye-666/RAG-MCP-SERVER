@@ -1,0 +1,15 @@
+config:
+  llm:
+    provider: openai
+  embedding:
+    provider: openai
+  vector_store:
+    provider: qdrant
+    host: localhost
+    port: 6333
+    collection_name: rag_collection
+    vector_size: 1536
+  retrieval:
+    top_k: 5
+  observability:
+    log_level: INFO

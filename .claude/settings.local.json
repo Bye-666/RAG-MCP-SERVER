@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd d:\\\\\\\\Dev\\\\\\\\Workspace\\\\\\\\AI\\\\\\\\RAG-MCP-SERVER)",
+      "Bash(\"d:/Dev/Workspace/AI/RAG-MCP-SERVER/.venv/Scripts/pip\" install *)",
+      "Bash(\"d:/Dev/Workspace/AI/RAG-MCP-SERVER/.venv/Scripts/python.exe\" -m pytest tests/unit/test_llm_factory.py -v)"
+    ]
+  }
+}

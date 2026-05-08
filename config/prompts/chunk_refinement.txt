@@ -1,0 +1,5 @@
+## config/prompts/chunk_refinement.txt
+
+Refine the following text chunk to be clean and readable. Remove page headers/footers, excessive whitespace, and formatting marks while preserving code blocks and content structure.
+
+{chunk}
