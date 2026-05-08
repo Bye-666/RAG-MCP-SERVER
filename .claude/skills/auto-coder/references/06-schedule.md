@@ -77,7 +77,7 @@
 | C5 | Transform 基类 + ChunkRefiner | [x] | 2026/05/08 | 22 unit tests + 5 integration tests passed |
 | C6 | MetadataEnricher | [x] | 2026/05/09 | 21 tests passed |
 | C7 | ImageCaptioner | [x] | 2026/05/09 | 14 tests passed |
-| C8 | DenseEncoder | [ ] | | |
+| C8 | DenseEncoder | [x] | 2026/05/09 | 12 tests passed |
 | C9 | SparseEncoder | [ ] | | |
 | C10 | BatchProcessor | [ ] | | |
 | C11 | BM25Indexer（倒排索引+IDF计算） | [ ] | | |
