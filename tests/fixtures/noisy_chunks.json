@@ -1,0 +1,34 @@
+{
+  "typical_noise_scenario": {
+    "input": "   \n\n  Page 1 of 10  \n\n  This is the main content of the document.  \n\n  Footer: Copyright 2024  \n\n  ",
+    "expected_cleaned": "This is the main content of the document."
+  },
+  "ocr_errors": {
+    "input": "Th1s  is  a  t3xt  w1th  0CR  err0rs  and  extra   spaces.",
+    "expected_cleaned": "Th1s is a t3xt w1th 0CR err0rs and extra spaces."
+  },
+  "page_header_footer": {
+    "input": "Header: Document Title\n\nThe actual content starts here and continues with important information.\n\nFooter: Page 5",
+    "expected_cleaned": "The actual content starts here and continues with important information."
+  },
+  "excessive_whitespace": {
+    "input": "This    text    has    too    many    spaces   \n\n\n\n   and   newlines.",
+    "expected_cleaned": "This text has too many spaces\n\nand newlines."
+  },
+  "format_markers": {
+    "input": "<!-- HTML comment -->\n<div>Some text with HTML</div>\n**Bold text** and _italic text_\n<!-- Another comment -->",
+    "expected_cleaned": "Some text with HTML\n**Bold text** and _italic text_"
+  },
+  "clean_text": {
+    "input": "This is already clean text with proper formatting.",
+    "expected_cleaned": "This is already clean text with proper formatting."
+  },
+  "code_blocks": {
+    "input": "```python\ndef hello():\n    print('Hello World')\n```",
+    "expected_cleaned": "```python\ndef hello():\n    print('Hello World')\n```"
+  },
+  "mixed_noise": {
+    "input": "  Page 3 of 20  \n\n<!-- Comment -->\n\nThis is   real   content with    noise.\n\n  More content here.  \n\n  Footer Text  ",
+    "expected_cleaned": "This is real content with noise.\n\nMore content here."
+  }
+}

@@ -1983,8 +1983,8 @@ dashboard:
 | C1 | 定义核心数据类型/契约（Document/Chunk/ChunkRecord） | [x] | 2025-01-XX | 33 tests passed |
 | C2 | 文件完整性检查（SHA256） | [x] | 2026/05/08 | 15 tests passed |
 | C3 | Loader 抽象基类与 PDF Loader | [x] | 2026/05/08 | 12 tests passed |
-| C4 | Splitter 集成（调用 Libs） | [ ] | | |
-| C5 | Transform 基类 + ChunkRefiner | [ ] | | |
+| C4 | Splitter 集成（调用 Libs） | [x] | 2026/05/08 | 15 tests passed |
+| C5 | Transform 基类 + ChunkRefiner | [x] | 2026/05/08 | 22 unit tests + 5 integration tests passed |
 | C6 | MetadataEnricher | [ ] | | |
 | C7 | ImageCaptioner | [ ] | | |
 | C8 | DenseEncoder | [ ] | | |
