@@ -18,3 +18,11 @@ class SplitterFactory:
             raise ValueError(f"Unsupported Splitter provider: {provider}")
 
         return splitter_class(**settings['splitter'])
+
+
+# Register built-in providers
+try:
+    from .recursive_splitter import RecursiveSplitter
+    SplitterFactory.register_provider("recursive", RecursiveSplitter)
+except ImportError:
+    pass  # langchain-text-splitters not installed
