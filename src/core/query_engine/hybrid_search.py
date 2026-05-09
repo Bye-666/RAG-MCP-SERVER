@@ -85,8 +85,9 @@ class HybridSearch:
 
         # Step 1: Process query
         if trace:
-            stage = trace.record_stage("hybrid_search_process_query", {
-                "query_length": len(query)
+            stage = trace.record_stage("query_processing", {
+                "query_length": len(query),
+                "method": "keyword_extraction"
             })
 
         processed_query = self.query_processor.process(query, filters=filters)
@@ -106,8 +107,9 @@ class HybridSearch:
 
         # Dense retrieval
         if trace:
-            stage = trace.record_stage("hybrid_search_dense_retrieve", {
-                "top_k": candidate_k
+            stage = trace.record_stage("dense_retrieval", {
+                "top_k": candidate_k,
+                "method": self.dense_retriever.__class__.__name__
             })
 
         try:
@@ -133,9 +135,10 @@ class HybridSearch:
 
         # Sparse retrieval
         if trace:
-            stage = trace.record_stage("hybrid_search_sparse_retrieve", {
+            stage = trace.record_stage("sparse_retrieval", {
                 "keyword_count": len(processed_query.keywords),
-                "top_k": candidate_k
+                "top_k": candidate_k,
+                "method": self.sparse_retriever.__class__.__name__
             })
 
         try:
@@ -165,9 +168,10 @@ class HybridSearch:
 
         # Step 3: Fusion
         if trace:
-            stage = trace.record_stage("hybrid_search_fusion", {
+            stage = trace.record_stage("fusion", {
                 "dense_count": len(dense_results),
-                "sparse_count": len(sparse_results)
+                "sparse_count": len(sparse_results),
+                "method": "RRF"
             })
 
         fused_results = self.fusion.fuse(dense_results, sparse_results)

@@ -2025,7 +2025,7 @@ dashboard:
 |---------|---------|------|---------|------|
 | F1 | TraceContext 增强（finish + 耗时统计 + trace_type） | ✅ | 2025-01-XX | 24个测试通过 |
 | F2 | 结构化日志 logger（JSON Lines） | ✅ | 2025-01-XX | 13个测试通过，集成到TraceCollector |
-| F3 | 在 Query 链路打点 | [ ] | | |
+| F3 | 在 Query 链路打点 | ✅ | 2025-01-XX | 26个集成测试通过 |
 | F4 | 在 Ingestion 链路打点 | [ ] | | |
 | F5 | Pipeline 进度回调 (on_progress) | [ ] | | |
 
@@ -2903,19 +2903,21 @@ dashboard:
 - **测试方法**：`pytest -q tests/unit/test_logger.py`。
 - **完成状态**：✅ 已完成 - 13个测试通过，已集成到TraceCollector
 
-### F3：在 Query 链路打点
+### ✅ F3：在 Query 链路打点
 - **目标**：在 HybridSearch/Rerank 中注入 TraceContext（`trace_type="query"`），利用 B 阶段抽象接口中预留的 `trace` 参数，显式调用 `trace.record_stage()` 记录各阶段数据。
 - **前置依赖**：D5（HybridSearch）、D6（Reranker）、F1（TraceContext 增强）、F2（结构化日志）
 - **修改文件**：
   - `src/core/query_engine/hybrid_search.py`（增加 trace 记录：dense/sparse/fusion 阶段）
   - `src/core/query_engine/reranker.py`（增加 trace 记录：rerank 阶段）
   - `tests/integration/test_hybrid_search.py`（断言 trace 中存在各阶段）
+  - `tests/integration/test_reranker.py`（新增：验证 rerank trace）
 - **说明**：B 阶段的接口已预留 `trace: TraceContext | None = None` 参数，本任务负责在调用时传入实际的 TraceContext 实例，并在各阶段记录 `method`/`provider`/`details` 字段。
 - **验收标准**：
   - 一次查询生成 trace，包含 `query_processing`/`dense_retrieval`/`sparse_retrieval`/`fusion`/`rerank` 阶段
   - 每个阶段记录 `elapsed_ms` 耗时字段和 `method` 字段
   - `trace.to_dict()` 中 `trace_type == "query"`
-- **测试方法**：`pytest -q tests/integration/test_hybrid_search.py`。
+- **测试方法**：`pytest -q tests/integration/test_hybrid_search.py tests/integration/test_reranker.py`。
+- **完成状态**：✅ 已完成 - 17个HybridSearch测试+9个Reranker测试通过
 
 ### F4：在 Ingestion 链路打点
 - **目标**：在 IngestionPipeline 中注入 TraceContext（`trace_type="ingestion"`），记录各摄取阶段的处理数据。

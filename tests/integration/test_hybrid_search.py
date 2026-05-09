@@ -345,3 +345,94 @@ class TestHybridSearch:
 
         # Sparse retriever should not be called
         mock_sparse_retriever.retrieve.assert_not_called()
+
+    def test_trace_contains_all_stages(self, mock_settings, mock_query_processor, mock_dense_retriever, mock_sparse_retriever, mock_fusion):
+        """Test that trace contains all required stages"""
+        search = HybridSearch(
+            settings=mock_settings,
+            query_processor=mock_query_processor,
+            dense_retriever=mock_dense_retriever,
+            sparse_retriever=mock_sparse_retriever,
+            fusion=mock_fusion
+        )
+
+        trace = TraceContext(trace_type="query")
+        results = search.search("test query", trace=trace)
+        trace.finish()
+
+        # Verify trace type
+        trace_dict = trace.to_dict()
+        assert trace_dict["trace_type"] == "query"
+
+        # Verify all required stages exist
+        stage_names = [stage.stage_name for stage in trace.stages]
+        assert "query_processing" in stage_names
+        assert "dense_retrieval" in stage_names
+        assert "sparse_retrieval" in stage_names
+        assert "fusion" in stage_names
+
+    def test_trace_stages_have_method_field(self, mock_settings, mock_query_processor, mock_dense_retriever, mock_sparse_retriever, mock_fusion):
+        """Test that each stage records method field"""
+        search = HybridSearch(
+            settings=mock_settings,
+            query_processor=mock_query_processor,
+            dense_retriever=mock_dense_retriever,
+            sparse_retriever=mock_sparse_retriever,
+            fusion=mock_fusion
+        )
+
+        trace = TraceContext(trace_type="query")
+        results = search.search("test query", trace=trace)
+        trace.finish()
+
+        # Verify each stage has method field
+        for stage in trace.stages:
+            assert "method" in stage.metadata, f"Stage {stage.stage_name} missing method field"
+
+    def test_trace_stages_have_elapsed_ms(self, mock_settings, mock_query_processor, mock_dense_retriever, mock_sparse_retriever, mock_fusion):
+        """Test that each stage records elapsed time"""
+        search = HybridSearch(
+            settings=mock_settings,
+            query_processor=mock_query_processor,
+            dense_retriever=mock_dense_retriever,
+            sparse_retriever=mock_sparse_retriever,
+            fusion=mock_fusion
+        )
+
+        trace = TraceContext(trace_type="query")
+        results = search.search("test query", trace=trace)
+        trace.finish()
+
+        # Verify each stage has duration
+        for stage in trace.stages:
+            assert stage.duration_ms is not None, f"Stage {stage.stage_name} missing duration"
+            assert stage.duration_ms >= 0
+
+    def test_trace_serialization(self, mock_settings, mock_query_processor, mock_dense_retriever, mock_sparse_retriever, mock_fusion):
+        """Test that trace can be serialized to dict"""
+        import json
+
+        search = HybridSearch(
+            settings=mock_settings,
+            query_processor=mock_query_processor,
+            dense_retriever=mock_dense_retriever,
+            sparse_retriever=mock_sparse_retriever,
+            fusion=mock_fusion
+        )
+
+        trace = TraceContext(trace_type="query")
+        results = search.search("test query", trace=trace)
+        trace.finish()
+
+        # Verify trace can be serialized
+        trace_dict = trace.to_dict()
+        json_str = json.dumps(trace_dict)
+        assert len(json_str) > 0
+
+        # Verify required fields
+        assert "trace_id" in trace_dict
+        assert "trace_type" in trace_dict
+        assert "started_at" in trace_dict
+        assert "finished_at" in trace_dict
+        assert "total_elapsed_ms" in trace_dict
+        assert "stages" in trace_dict

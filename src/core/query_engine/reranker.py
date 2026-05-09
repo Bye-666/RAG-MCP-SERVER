@@ -98,9 +98,9 @@ class Reranker:
 
         # Attempt reranking with fallback
         if trace:
-            stage = trace.record_stage("reranker", {
+            stage = trace.record_stage("rerank", {
                 "candidate_count": len(candidates),
-                "backend": self.backend.__class__.__name__
+                "method": self.backend.__class__.__name__
             })
 
         try:
