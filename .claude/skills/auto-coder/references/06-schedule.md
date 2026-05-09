@@ -84,7 +84,7 @@
 | C12 | VectorUpserter（幂等upsert） | [x] | 2026/05/09 | 18 tests passed |
 | C13 | ImageStorage（图片存储+SQLite索引） | [x] | 2026/05/09 | 16 tests passed |
 | C14 | Pipeline 编排（MVP 串起来） | [x] | 2026/05/09 | 8 integration tests passed |
-| C15 | 脚本入口 ingest.py | [ ] | | |
+| C15 | 脚本入口 ingest.py | [x] | 2026/05/09 | 10 E2E tests passed |
 
 #### 阶段 D：Retrieval MVP
 
