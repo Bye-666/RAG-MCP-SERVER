@@ -200,3 +200,57 @@ class ChromaStore(BaseVectorStore):
     def count(self) -> int:
         """Get the number of records in the collection."""
         return self.collection.count()
+
+    def delete_by_metadata(self, filters: Dict[str, Any]) -> int:
+        """Delete records matching metadata filters.
+
+        Args:
+            filters: Metadata filters (ChromaDB where clause)
+
+        Returns:
+            Number of records deleted
+        """
+        if not filters:
+            return 0
+
+        # Get IDs matching the filter
+        results = self.collection.get(
+            where=filters,
+            include=[]
+        )
+
+        if not results["ids"]:
+            return 0
+
+        # Delete the matching records
+        self.collection.delete(ids=results["ids"])
+
+        return len(results["ids"])
+
+    def get_by_metadata(self, filters: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Retrieve records by metadata filters.
+
+        Args:
+            filters: Metadata filters (ChromaDB where clause)
+
+        Returns:
+            List of records with 'id', 'text', and 'metadata'
+        """
+        if not filters:
+            return []
+
+        results = self.collection.get(
+            where=filters,
+            include=["documents", "metadatas"]
+        )
+
+        formatted_results = []
+        if results["ids"]:
+            for i in range(len(results["ids"])):
+                formatted_results.append({
+                    "id": results["ids"][i],
+                    "text": results["documents"][i] if results["documents"] else "",
+                    "metadata": results["metadatas"][i] if results["metadatas"] else {}
+                })
+
+        return formatted_results

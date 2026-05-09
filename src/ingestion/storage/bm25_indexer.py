@@ -233,3 +233,41 @@ class BM25Indexer:
             'num_terms': len(self.index),
             'total_postings': sum(len(term_idx.postings) for term_idx in self.index.values())
         }
+
+    def remove_document(self, chunk_ids: List[str]) -> int:
+        """Remove documents from the index by chunk IDs
+
+        Args:
+            chunk_ids: List of chunk IDs to remove
+
+        Returns:
+            Number of postings removed
+        """
+        if not chunk_ids:
+            return 0
+
+        chunk_id_set = set(chunk_ids)
+        removed_count = 0
+        terms_to_remove = []
+
+        # Remove postings for the specified chunk IDs
+        for term, term_index in self.index.items():
+            original_count = len(term_index.postings)
+            term_index.postings = [
+                posting for posting in term_index.postings
+                if posting.chunk_id not in chunk_id_set
+            ]
+            removed_count += original_count - len(term_index.postings)
+
+            # Mark terms with no postings for removal
+            if not term_index.postings:
+                terms_to_remove.append(term)
+
+        # Remove empty terms
+        for term in terms_to_remove:
+            del self.index[term]
+
+        # Update document count (approximate - assumes each chunk is a document)
+        self.num_documents = max(0, self.num_documents - len(chunk_ids))
+
+        return removed_count

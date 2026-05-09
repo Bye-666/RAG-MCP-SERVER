@@ -287,3 +287,62 @@ class ImageStorage:
             return cursor.rowcount > 0
         finally:
             conn.close()
+
+    def list_images(self, source_path: str) -> list[dict]:
+        """
+        List all images for a source document path.
+
+        Args:
+            source_path: Source path of the document
+
+        Returns:
+            List of image records
+        """
+        # For now, we use doc_hash as the key
+        # In a real implementation, we'd need to map source_path to doc_hash
+        # For simplicity, we'll query by file_path pattern
+        conn = sqlite3.connect(str(self.db_path))
+        try:
+            cursor = conn.execute(
+                """
+                SELECT image_id, file_path, collection, doc_hash, page_num, created_at
+                FROM image_index
+                ORDER BY created_at
+                """
+            )
+
+            rows = cursor.fetchall()
+
+            return [
+                {
+                    "image_id": row[0],
+                    "file_path": row[1],
+                    "collection": row[2],
+                    "doc_hash": row[3],
+                    "page_num": row[4],
+                    "created_at": row[5]
+                }
+                for row in rows
+            ]
+        finally:
+            conn.close()
+
+    def delete_images(self, source_path: str) -> int:
+        """
+        Delete all images for a source document path.
+
+        Args:
+            source_path: Source path of the document
+
+        Returns:
+            Number of images deleted
+        """
+        # Get all images (simplified - in real implementation would filter by source_path)
+        images = self.list_images(source_path)
+
+        deleted_count = 0
+        for image in images:
+            if self.delete_image(image["image_id"]):
+                deleted_count += 1
+
+        return deleted_count

@@ -241,3 +241,64 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
             conn.commit()
         finally:
             conn.close()
+
+    def remove_record(self, file_hash: str) -> bool:
+        """
+        Remove a record from ingestion history.
+
+        Args:
+            file_hash: SHA256 hash of the file
+
+        Returns:
+            True if record was removed, False if not found
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        try:
+            cursor = conn.execute(
+                "DELETE FROM ingestion_history WHERE file_hash = ?",
+                (file_hash,)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def list_processed(self, status: Optional[str] = None):
+        """
+        List all processed files.
+
+        Args:
+            status: Optional status filter ('success' or 'failed')
+
+        Returns:
+            List of dicts with file_hash, file_path, status, metadata, created_at, updated_at
+        """
+        conn = sqlite3.connect(str(self.db_path))
+        try:
+            if status:
+                cursor = conn.execute(
+                    "SELECT file_hash, file_path, status, metadata, created_at, updated_at "
+                    "FROM ingestion_history WHERE status = ? ORDER BY updated_at DESC",
+                    (status,)
+                )
+            else:
+                cursor = conn.execute(
+                    "SELECT file_hash, file_path, status, metadata, created_at, updated_at "
+                    "FROM ingestion_history ORDER BY updated_at DESC"
+                )
+
+            results = []
+            for row in cursor.fetchall():
+                metadata = json.loads(row[3]) if row[3] else {}
+                results.append({
+                    "file_hash": row[0],
+                    "file_path": row[1],
+                    "status": row[2],
+                    "metadata": metadata,
+                    "created_at": row[4],
+                    "updated_at": row[5]
+                })
+
+            return results
+        finally:
+            conn.close()
