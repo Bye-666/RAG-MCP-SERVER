@@ -139,25 +139,68 @@ class IngestionPipeline:
                 return result
 
             # Stage 2: Load document
+            if trace:
+                stage = trace.record_stage("load", {
+                    "file": str(file_path),
+                    "method": self.loader.__class__.__name__
+                })
+
             self._report_progress("load", {"file": str(file_path)})
             document = self.loader.load(str(file_path))
 
+            if trace:
+                trace.finish_stage(stage, {
+                    "doc_id": document.id,
+                    "text_length": len(document.text)
+                })
+
             # Stage 3: Split into chunks
+            if trace:
+                stage = trace.record_stage("split", {
+                    "doc_id": document.id,
+                    "method": self.chunker.__class__.__name__
+                })
+
             self._report_progress("split", {"doc_id": document.id})
             chunks = self.chunker.split_document(document)
             result["chunk_count"] = len(chunks)
 
+            if trace:
+                trace.finish_stage(stage, {"chunk_count": len(chunks)})
+
             # Stage 4: Transform (optional)
             if config.enable_transforms and self.transforms:
                 for transform in self.transforms:
+                    if trace:
+                        stage = trace.record_stage("transform", {
+                            "method": transform.__class__.__name__,
+                            "chunk_count": len(chunks)
+                        })
+
                     self._report_progress("transform", {"name": transform.__class__.__name__})
                     chunks = transform.transform(chunks, trace=trace)
+
+                    if trace:
+                        trace.finish_stage(stage, {"output_count": len(chunks)})
 
             # Stage 5: Encode
             records = []
             if self.batch_processor:
+                if trace:
+                    stage = trace.record_stage("embed", {
+                        "chunk_count": len(chunks),
+                        "method": self.batch_processor.__class__.__name__
+                    })
+
                 self._report_progress("encode", {"chunk_count": len(chunks)})
                 records = self.batch_processor.process(chunks, trace=trace)
+
+                if trace:
+                    trace.finish_stage(stage, {
+                        "record_count": len(records),
+                        "dense_count": sum(1 for r in records if r.dense_vector is not None),
+                        "sparse_count": sum(1 for r in records if r.sparse_vector is not None)
+                    })
             else:
                 # No encoding, convert chunks to records
                 records = [ChunkRecord.from_chunk(chunk) for chunk in chunks]
@@ -167,8 +210,18 @@ class IngestionPipeline:
             if self.vector_upserter and config.enable_dense_encoding:
                 dense_records = [r for r in records if r.dense_vector is not None]
                 if dense_records:
+                    if trace:
+                        stage = trace.record_stage("upsert", {
+                            "count": len(dense_records),
+                            "method": self.vector_upserter.__class__.__name__,
+                            "store_type": "vector"
+                        })
+
                     self._report_progress("store_vectors", {"count": len(dense_records)})
                     self.vector_upserter.upsert(dense_records, trace=trace)
+
+                    if trace:
+                        trace.finish_stage(stage, {"success": True})
 
             # 6b. BM25 index (if sparse vectors available)
             if self.bm25_indexer and config.enable_sparse_encoding:
