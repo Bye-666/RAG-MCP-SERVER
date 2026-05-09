@@ -2014,7 +2014,7 @@ dashboard:
 |---------|---------|------|---------|------|
 | E1 | MCP Server 入口与 Stdio 约束 | [x] | 2026-05-09 | 5个集成测试通过 |
 | E2 | Protocol Handler 协议解析与能力协商 | [x] | 2026-05-09 | 12个单元测试通过 |
-| E3 | query_knowledge_hub Tool | [ ] | | |
+| E3 | query_knowledge_hub Tool | [x] | 2026-05-09 | 25个单元测试通过 |
 | E4 | list_collections Tool | [ ] | | |
 | E5 | get_document_summary Tool | [ ] | | |
 | E6 | 多模态返回组装（Text + Image） | [ ] | | |
