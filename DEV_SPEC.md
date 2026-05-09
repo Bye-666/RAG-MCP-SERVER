@@ -2845,13 +2845,14 @@ dashboard:
 - **测试方法**：`pytest -q tests/unit/test_list_collections.py`。
 - **完成状态**：✅ 已完成 - 17个测试通过
 
-### E5：实现 tool：get_document_summary
+### ✅ E5：实现 tool：get_document_summary
 - **目标**：实现 `tools/get_document_summary.py`：按 doc_id 返回 title/summary/tags（可先从 metadata/缓存取）。
 - **修改文件**：
   - `src/mcp_server/tools/get_document_summary.py`
   - `tests/unit/test_get_document_summary.py`
 - **验收标准**：对不存在 doc_id 返回规范错误；存在时返回结构化信息。
 - **测试方法**：`pytest -q tests/unit/test_get_document_summary.py`。
+- **完成状态**：✅ 已完成 - 22个测试通过
 
 ### E6：多模态返回组装（Text + Image）
 - **目标**：实现 `multimodal_assembler.py`：命中 chunk 含 image_refs 时读取图片并 base64 返回 ImageContent。
