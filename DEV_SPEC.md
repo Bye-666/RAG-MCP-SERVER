@@ -2867,7 +2867,7 @@ dashboard:
 
 ## 阶段 F：Trace 基础设施与打点（目标：Ingestion + Query 双链路可追踪）
 
-### F1：TraceContext 增强（finish + 耗时统计 + trace_type）
+### ✅ F1：TraceContext 增强（finish + 耗时统计 + trace_type）
 - **目标**：增强已有的 `TraceContext`（C5 已实现基础版），添加 `finish()` 方法、耗时统计、`trace_type` 字段（区分 query/ingestion）、`to_dict()` 序列化功能。
 - **修改文件**：
   - `src/core/trace/trace_context.py`（增强：添加 trace_type/finish/elapsed_ms/to_dict）
@@ -2884,6 +2884,7 @@ dashboard:
   - `finish()` 后 `to_dict()` 输出包含 `trace_id`、`trace_type`、`started_at`、`finished_at`、`total_elapsed_ms`、`stages`
   - 输出 dict 可直接 `json.dumps()` 序列化
 - **测试方法**：`pytest -q tests/unit/test_trace_context.py`。
+- **完成状态**：✅ 已完成 - 24个测试通过
 
 
 ### F2：结构化日志 logger（JSON Lines）
