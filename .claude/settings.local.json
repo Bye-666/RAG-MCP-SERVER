@@ -41,7 +41,13 @@
       "PowerShell(pytest tests/unit/test_chunk_refiner.py -v)",
       "PowerShell(pytest tests/integration/test_chunk_refiner_llm.py -v -s)",
       "Bash(python -m pytest tests/integration/test_chunk_refiner_llm.py -v)",
-      "PowerShell(pytest tests/integration/test_chunk_refiner_llm.py -v)"
+      "PowerShell(pytest tests/integration/test_chunk_refiner_llm.py -v)",
+      "PowerShell(pytest -xvs tests/unit/test_metadata_enricher_contract.py)",
+      "PowerShell(pytest -xvs tests/unit/test_metadata_enricher_contract.py::test_llm_mode_successful_enrichment)",
+      "Bash(python scripts/sync_spec.py)",
+      "PowerShell(pytest -xvs tests/unit/test_image_captioner_fallback.py)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit *)"
     ]
   }
 }
