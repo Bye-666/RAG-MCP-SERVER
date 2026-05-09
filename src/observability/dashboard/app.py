@@ -11,6 +11,7 @@ from src.observability.dashboard.pages import (
     traces,
     data_browser,
     ingestion,
+    ingestion_traces,
     query_test,
     settings,
 )
@@ -33,6 +34,7 @@ def main():
         "📊 Traces": traces,
         "📚 Data Browser": data_browser,
         "📥 Ingestion": ingestion,
+        "📈 Ingestion Traces": ingestion_traces,
         "🔍 Query Test": query_test,
         "⚙️ Settings": settings,
     }
