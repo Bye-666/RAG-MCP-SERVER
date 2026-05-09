@@ -2001,7 +2001,7 @@ dashboard:
 | 任务编号 | 任务名称 | 状态 | 完成日期 | 备注 |
 |---------|---------|------|---------|------|
 | D1 | QueryProcessor（关键词提取 + filters） | [x] | 2026-05-09 | 17个测试通过 |
-| D2 | DenseRetriever（调用 VectorStore.query） | [ ] | | |
+| D2 | DenseRetriever（调用 VectorStore.query） | [x] | 2026-05-09 | 12个测试通过 |
 | D3 | SparseRetriever（BM25 查询） | [ ] | | |
 | D4 | RRF Fusion | [ ] | | |
 | D5 | HybridSearch 编排 | [ ] | | |

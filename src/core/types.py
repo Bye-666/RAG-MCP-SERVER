@@ -187,3 +187,41 @@ class ImageMetadata:
         }
     """
     pass
+
+
+@dataclass
+class RetrievalResult:
+    """Represents a single retrieval result from search
+
+    Used by DenseRetriever, SparseRetriever, and HybridSearch to return
+    ranked results with scores and metadata.
+
+    Attributes:
+        chunk_id: Unique chunk identifier
+        score: Relevance score (higher = more relevant)
+        text: Chunk text content
+        metadata: Chunk metadata (source_path, collection, etc.)
+    """
+    chunk_id: str
+    score: float
+    text: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return asdict(self)
+
+    def to_json(self) -> str:
+        """Convert to JSON string"""
+        return json.dumps(self.to_dict(), ensure_ascii=False)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'RetrievalResult':
+        """Create RetrievalResult from dictionary"""
+        return cls(**data)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> 'RetrievalResult':
+        """Create RetrievalResult from JSON string"""
+        return cls.from_dict(json.loads(json_str))
+
