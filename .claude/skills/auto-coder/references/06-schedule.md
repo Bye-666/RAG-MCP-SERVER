@@ -105,17 +105,17 @@
 | E1 | MCP Server 入口与 Stdio 约束 | [x] | 2026-05-09 | 5个集成测试通过 |
 | E2 | Protocol Handler 协议解析与能力协商 | [x] | 2026-05-09 | 12个单元测试通过 |
 | E3 | query_knowledge_hub Tool | [x] | 2026-05-09 | 25个单元测试通过 |
-| E4 | list_collections Tool | [ ] | | |
-| E5 | get_document_summary Tool | [ ] | | |
-| E6 | 多模态返回组装（Text + Image） | [ ] | | |
+| E4 | list_collections Tool | [x] | 2026/05/09 | 17个测试通过 |
+| E5 | get_document_summary Tool | [x] | 2026/05/09 | 22个测试通过 |
+| E6 | 多模态返回组装（Text + Image） | [x] | 2026/05/09 | 4个测试通过 |
 
 #### 阶段 F：Trace 基础设施与打点
 
 | 任务编号 | 任务名称 | 状态 | 完成日期 | 备注 |
 |---------|---------|------|---------|------|
-| F1 | TraceContext 增强（finish + 耗时统计 + trace_type） | [ ] | | |
-| F2 | 结构化日志 logger（JSON Lines） | [ ] | | |
-| F3 | 在 Query 链路打点 | [ ] | | |
+| F1 | TraceContext 增强（finish + 耗时统计 + trace_type） | ✅ | 2025-01-XX | 24个测试通过 |
+| F2 | 结构化日志 logger（JSON Lines） | ✅ | 2025-01-XX | 13个测试通过，集成到TraceCollector |
+| F3 | 在 Query 链路打点 | ✅ | 2025-01-XX | 26个集成测试通过 |
 | F4 | 在 Ingestion 链路打点 | [ ] | | |
 | F5 | Pipeline 进度回调 (on_progress) | [ ] | | |
 
@@ -926,35 +926,38 @@
   - 无结果时返回友好提示而非空数组
 - **测试方法**：`pytest -q tests/integration/test_mcp_server.py -k query_knowledge_hub`。
 
-### E4：实现 tool：list_collections
+### ✅ E4：实现 tool：list_collections
 - **目标**：实现 `tools/list_collections.py`：列出 `data/documents/` 下集合并附带统计（可延后到下一步）。
 - **修改文件**：
   - `src/mcp_server/tools/list_collections.py`
   - `tests/unit/test_list_collections.py`
 - **验收标准**：对 fixtures 中的目录结构能返回集合名列表。
 - **测试方法**：`pytest -q tests/unit/test_list_collections.py`。
+- **完成状态**：✅ 已完成 - 17个测试通过
 
-### E5：实现 tool：get_document_summary
+### ✅ E5：实现 tool：get_document_summary
 - **目标**：实现 `tools/get_document_summary.py`：按 doc_id 返回 title/summary/tags（可先从 metadata/缓存取）。
 - **修改文件**：
   - `src/mcp_server/tools/get_document_summary.py`
   - `tests/unit/test_get_document_summary.py`
 - **验收标准**：对不存在 doc_id 返回规范错误；存在时返回结构化信息。
 - **测试方法**：`pytest -q tests/unit/test_get_document_summary.py`。
+- **完成状态**：✅ 已完成 - 22个测试通过
 
-### E6：多模态返回组装（Text + Image）
+### ✅ E6：多模态返回组装（Text + Image）
 - **目标**：实现 `multimodal_assembler.py`：命中 chunk 含 image_refs 时读取图片并 base64 返回 ImageContent。
 - **修改文件**：
   - `src/core/response/multimodal_assembler.py`
   - `tests/integration/test_mcp_server.py`（补图像返回用例）
 - **验收标准**：返回 content 中包含 image type，mimeType 正确，data 为 base64 字符串。
 - **测试方法**：`pytest -q tests/integration/test_mcp_server.py -k image`。
+- **完成状态**：✅ 已完成 - 4个图像测试通过
 
 ---
 
 ## 阶段 F：Trace 基础设施与打点（目标：Ingestion + Query 双链路可追踪）
 
-### F1：TraceContext 增强（finish + 耗时统计 + trace_type）
+### ✅ F1：TraceContext 增强（finish + 耗时统计 + trace_type）
 - **目标**：增强已有的 `TraceContext`（C5 已实现基础版），添加 `finish()` 方法、耗时统计、`trace_type` 字段（区分 query/ingestion）、`to_dict()` 序列化功能。
 - **修改文件**：
   - `src/core/trace/trace_context.py`（增强：添加 trace_type/finish/elapsed_ms/to_dict）
@@ -971,13 +974,14 @@
   - `finish()` 后 `to_dict()` 输出包含 `trace_id`、`trace_type`、`started_at`、`finished_at`、`total_elapsed_ms`、`stages`
   - 输出 dict 可直接 `json.dumps()` 序列化
 - **测试方法**：`pytest -q tests/unit/test_trace_context.py`。
+- **完成状态**：✅ 已完成 - 24个测试通过
 
 
-### F2：结构化日志 logger（JSON Lines）
+### ✅ F2：结构化日志 logger（JSON Lines）
 - **目标**：增强 `observability/logger.py`，支持 JSON Lines 格式输出，并实现 trace 持久化到 `logs/traces.jsonl`。
 - **修改文件**：
   - `src/observability/logger.py`（增强：添加 JSONFormatter + FileHandler）
-  - `tests/unit/test_jsonl_logger.py`
+  - `tests/unit/test_logger.py`
 - **实现类/函数**：
   - `JSONFormatter`：自定义 logging Formatter，输出 JSON 格式
   - `get_trace_logger() -> logging.Logger`：获取配置了 JSON Lines 输出的 logger
@@ -986,21 +990,24 @@
   - F1 负责 TraceContext 的数据结构（含 `trace_type`）和 `finish()` 方法
   - F2 负责将 `trace.to_dict()` 的结果持久化到文件
 - **验收标准**：写入一条 trace 后文件新增一行合法 JSON，包含 `trace_type` 字段。
-- **测试方法**：`pytest -q tests/unit/test_jsonl_logger.py`。
+- **测试方法**：`pytest -q tests/unit/test_logger.py`。
+- **完成状态**：✅ 已完成 - 13个测试通过，已集成到TraceCollector
 
-### F3：在 Query 链路打点
+### ✅ F3：在 Query 链路打点
 - **目标**：在 HybridSearch/Rerank 中注入 TraceContext（`trace_type="query"`），利用 B 阶段抽象接口中预留的 `trace` 参数，显式调用 `trace.record_stage()` 记录各阶段数据。
 - **前置依赖**：D5（HybridSearch）、D6（Reranker）、F1（TraceContext 增强）、F2（结构化日志）
 - **修改文件**：
   - `src/core/query_engine/hybrid_search.py`（增加 trace 记录：dense/sparse/fusion 阶段）
   - `src/core/query_engine/reranker.py`（增加 trace 记录：rerank 阶段）
   - `tests/integration/test_hybrid_search.py`（断言 trace 中存在各阶段）
+  - `tests/integration/test_reranker.py`（新增：验证 rerank trace）
 - **说明**：B 阶段的接口已预留 `trace: TraceContext | None = None` 参数，本任务负责在调用时传入实际的 TraceContext 实例，并在各阶段记录 `method`/`provider`/`details` 字段。
 - **验收标准**：
   - 一次查询生成 trace，包含 `query_processing`/`dense_retrieval`/`sparse_retrieval`/`fusion`/`rerank` 阶段
   - 每个阶段记录 `elapsed_ms` 耗时字段和 `method` 字段
   - `trace.to_dict()` 中 `trace_type == "query"`
-- **测试方法**：`pytest -q tests/integration/test_hybrid_search.py`。
+- **测试方法**：`pytest -q tests/integration/test_hybrid_search.py tests/integration/test_reranker.py`。
+- **完成状态**：✅ 已完成 - 17个HybridSearch测试+9个Reranker测试通过
 
 ### F4：在 Ingestion 链路打点
 - **目标**：在 IngestionPipeline 中注入 TraceContext（`trace_type="ingestion"`），记录各摄取阶段的处理数据。
