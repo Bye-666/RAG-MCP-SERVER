@@ -2027,7 +2027,7 @@ dashboard:
 | F2 | 结构化日志 logger（JSON Lines） | ✅ | 2025-01-XX | 13个测试通过，集成到TraceCollector |
 | F3 | 在 Query 链路打点 | ✅ | 2025-01-XX | 26个集成测试通过 |
 | F4 | 在 Ingestion 链路打点 | [x] | 2026/05/09 | 9个测试通过 |
-| F5 | Pipeline 进度回调 (on_progress) | [ ] | | |
+| F5 | Pipeline 进度回调 (on_progress) | [x] | 2026/05/09 | 10个测试通过 |
 
 #### 阶段 G：可视化管理平台 Dashboard
 
