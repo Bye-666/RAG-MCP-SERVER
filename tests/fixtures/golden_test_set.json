@@ -1,0 +1,49 @@
+{
+  "test_cases": [
+    {
+      "query": "如何配置 Azure OpenAI？",
+      "expected_chunk_ids": ["chunk_azure_config_001", "chunk_azure_config_002"],
+      "expected_sources": ["azure_openai_guide.pdf"],
+      "metadata": {
+        "category": "configuration",
+        "difficulty": "medium"
+      }
+    },
+    {
+      "query": "什么是 RAG 系统？",
+      "expected_chunk_ids": ["chunk_rag_intro_001"],
+      "expected_sources": ["rag_introduction.pdf"],
+      "metadata": {
+        "category": "concept",
+        "difficulty": "easy"
+      }
+    },
+    {
+      "query": "如何实现混合检索？",
+      "expected_chunk_ids": ["chunk_hybrid_search_001", "chunk_hybrid_search_002", "chunk_hybrid_search_003"],
+      "expected_sources": ["hybrid_search_guide.pdf"],
+      "metadata": {
+        "category": "implementation",
+        "difficulty": "hard"
+      }
+    },
+    {
+      "query": "向量数据库的作用是什么？",
+      "expected_chunk_ids": ["chunk_vector_db_001", "chunk_vector_db_002"],
+      "expected_sources": ["vector_database.pdf"],
+      "metadata": {
+        "category": "concept",
+        "difficulty": "medium"
+      }
+    },
+    {
+      "query": "如何优化检索性能？",
+      "expected_chunk_ids": ["chunk_optimization_001", "chunk_optimization_002"],
+      "expected_sources": ["performance_optimization.pdf"],
+      "metadata": {
+        "category": "optimization",
+        "difficulty": "hard"
+      }
+    }
+  ]
+}
