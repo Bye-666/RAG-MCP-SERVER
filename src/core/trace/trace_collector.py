@@ -6,36 +6,37 @@ Responsible for collecting finished traces and triggering persistence.
 
 from typing import Optional
 from .trace_context import TraceContext
+from src.observability.logger import write_trace
 
 
 class TraceCollector:
     """
-    Collects trace data and triggers persistence.
-
-    This is a simple collector that can be extended in F2 to write
-    traces to JSON Lines files.
+    Collects trace data and triggers persistence to JSON Lines.
     """
 
-    def __init__(self):
-        """Initialize trace collector."""
+    def __init__(self, log_dir: str = "logs"):
+        """
+        Initialize trace collector.
+
+        Args:
+            log_dir: Directory to write trace logs (default: "logs")
+        """
         self.collected_traces = []
+        self.log_dir = log_dir
 
     def collect(self, trace: TraceContext) -> None:
         """
-        Collect a trace for persistence.
+        Collect a trace and persist to logs/traces.jsonl.
 
         Args:
             trace: TraceContext instance to collect
-
-        Note:
-            In F2, this will trigger writing to logs/traces.jsonl
         """
         # Store trace data
         trace_dict = trace.to_dict()
         self.collected_traces.append(trace_dict)
 
-        # TODO: In F2, write to JSON Lines file
-        # For now, just collect in memory
+        # Persist to JSON Lines file
+        write_trace(trace_dict, self.log_dir)
 
     def get_traces(self):
         """

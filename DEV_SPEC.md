@@ -2023,8 +2023,8 @@ dashboard:
 
 | 任务编号 | 任务名称 | 状态 | 完成日期 | 备注 |
 |---------|---------|------|---------|------|
-| F1 | TraceContext 增强（finish + 耗时统计 + trace_type） | [ ] | | |
-| F2 | 结构化日志 logger（JSON Lines） | [ ] | | |
+| F1 | TraceContext 增强（finish + 耗时统计 + trace_type） | ✅ | 2025-01-XX | 24个测试通过 |
+| F2 | 结构化日志 logger（JSON Lines） | ✅ | 2025-01-XX | 13个测试通过，集成到TraceCollector |
 | F3 | 在 Query 链路打点 | [ ] | | |
 | F4 | 在 Ingestion 链路打点 | [ ] | | |
 | F5 | Pipeline 进度回调 (on_progress) | [ ] | | |
@@ -2887,11 +2887,11 @@ dashboard:
 - **完成状态**：✅ 已完成 - 24个测试通过
 
 
-### F2：结构化日志 logger（JSON Lines）
+### ✅ F2：结构化日志 logger（JSON Lines）
 - **目标**：增强 `observability/logger.py`，支持 JSON Lines 格式输出，并实现 trace 持久化到 `logs/traces.jsonl`。
 - **修改文件**：
   - `src/observability/logger.py`（增强：添加 JSONFormatter + FileHandler）
-  - `tests/unit/test_jsonl_logger.py`
+  - `tests/unit/test_logger.py`
 - **实现类/函数**：
   - `JSONFormatter`：自定义 logging Formatter，输出 JSON 格式
   - `get_trace_logger() -> logging.Logger`：获取配置了 JSON Lines 输出的 logger
@@ -2900,7 +2900,8 @@ dashboard:
   - F1 负责 TraceContext 的数据结构（含 `trace_type`）和 `finish()` 方法
   - F2 负责将 `trace.to_dict()` 的结果持久化到文件
 - **验收标准**：写入一条 trace 后文件新增一行合法 JSON，包含 `trace_type` 字段。
-- **测试方法**：`pytest -q tests/unit/test_jsonl_logger.py`。
+- **测试方法**：`pytest -q tests/unit/test_logger.py`。
+- **完成状态**：✅ 已完成 - 13个测试通过，已集成到TraceCollector
 
 ### F3：在 Query 链路打点
 - **目标**：在 HybridSearch/Rerank 中注入 TraceContext（`trace_type="query"`），利用 B 阶段抽象接口中预留的 `trace` 参数，显式调用 `trace.record_stage()` 记录各阶段数据。

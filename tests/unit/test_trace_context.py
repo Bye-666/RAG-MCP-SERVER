@@ -206,9 +206,9 @@ class TestTraceContext:
 class TestTraceCollector:
     """Test TraceCollector functionality."""
 
-    def test_collect_trace(self):
+    def test_collect_trace(self, tmp_path):
         """Test collecting a trace."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
         trace = TraceContext(trace_type="query")
         trace.finish()
 
@@ -218,9 +218,9 @@ class TestTraceCollector:
         assert len(traces) == 1
         assert traces[0]["trace_type"] == "query"
 
-    def test_collect_multiple_traces(self):
+    def test_collect_multiple_traces(self, tmp_path):
         """Test collecting multiple traces."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
 
         trace1 = TraceContext(trace_type="query")
         trace1.finish()
@@ -235,9 +235,9 @@ class TestTraceCollector:
         assert traces[0]["trace_type"] == "query"
         assert traces[1]["trace_type"] == "ingestion"
 
-    def test_get_traces(self):
+    def test_get_traces(self, tmp_path):
         """Test getting collected traces."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
         trace = TraceContext()
         trace.finish()
 
@@ -248,9 +248,9 @@ class TestTraceCollector:
         assert len(traces) == 1
         assert "trace_id" in traces[0]
 
-    def test_clear_traces(self):
+    def test_clear_traces(self, tmp_path):
         """Test clearing collected traces."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
         trace = TraceContext()
         trace.finish()
 
@@ -260,9 +260,9 @@ class TestTraceCollector:
         collector.clear()
         assert len(collector.get_traces()) == 0
 
-    def test_collect_stores_dict(self):
+    def test_collect_stores_dict(self, tmp_path):
         """Test that collect stores trace as dictionary."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
         trace = TraceContext(trace_type="query")
         stage = trace.record_stage("test_stage")
         trace.finish_stage(stage)
@@ -276,9 +276,9 @@ class TestTraceCollector:
         assert "stages" in traces[0]
         assert len(traces[0]["stages"]) == 1
 
-    def test_collected_trace_is_serializable(self):
+    def test_collected_trace_is_serializable(self, tmp_path):
         """Test collected traces are JSON serializable."""
-        collector = TraceCollector()
+        collector = TraceCollector(log_dir=str(tmp_path))
         trace = TraceContext(trace_type="ingestion")
         trace.finish()
 
@@ -288,6 +288,26 @@ class TestTraceCollector:
         # Should not raise
         json_str = json.dumps(traces)
         assert len(json_str) > 0
+
+    def test_collect_persists_to_file(self, tmp_path):
+        """Test that collect persists trace to JSON Lines file."""
+        collector = TraceCollector(log_dir=str(tmp_path))
+        trace = TraceContext(trace_type="query")
+        trace.finish()
+
+        collector.collect(trace)
+
+        # Verify file was created
+        trace_file = tmp_path / "traces.jsonl"
+        assert trace_file.exists()
+
+        # Verify content
+        with open(trace_file, "r", encoding="utf-8") as f:
+            line = f.readline()
+            data = json.loads(line)
+
+        assert data["trace_type"] == "query"
+        assert data["trace_id"] == trace.trace_id
 
 
 class TestStageRecord:
