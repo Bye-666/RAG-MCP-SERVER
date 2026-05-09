@@ -6,12 +6,16 @@ Tests verify:
 - stdout only contains MCP messages
 - stderr contains logs
 - initialize handshake works
+- Multimodal content (text + images) assembly
 """
 
 import json
 import subprocess
 import sys
+import base64
+import tempfile
 from pathlib import Path
+from src.core.response.multimodal_assembler import MultimodalAssembler
 
 
 def test_server_initialize():
@@ -193,3 +197,184 @@ def test_server_multiple_requests():
     # Or error if not initialized yet
     resp2 = json.loads(lines[1])
     assert resp2["jsonrpc"] == "2.0"
+
+
+def test_multimodal_assembler_with_images():
+    """Test multimodal assembler can load and encode images."""
+    # Create temporary image file
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        images_dir = tmpdir_path / "images"
+        images_dir.mkdir()
+
+        # Create a simple 1x1 PNG image (smallest valid PNG)
+        png_data = (
+            b'\x89PNG\r\n\x1a\n'  # PNG signature
+            b'\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+            b'\x08\x02\x00\x00\x00\x90wS\xde'  # IHDR chunk
+            b'\x00\x00\x00\x0cIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
+            b'\r\n-\xb4'  # IDAT chunk
+            b'\x00\x00\x00\x00IEND\xaeB`\x82'  # IEND chunk
+        )
+
+        image_path = images_dir / "test_image.png"
+        image_path.write_bytes(png_data)
+
+        # Create assembler
+        assembler = MultimodalAssembler(images_base_dir=str(tmpdir_path))
+
+        # Create retrieval results with image reference
+        retrieval_results = [
+            {
+                "text": "This is a test document with an image.",
+                "metadata": {
+                    "images": [
+                        {
+                            "id": "test_img_001",
+                            "path": "images/test_image.png",
+                            "page": 1,
+                            "text_offset": 20,
+                            "text_length": 15
+                        }
+                    ]
+                }
+            }
+        ]
+
+        # Assemble content
+        content = assembler.assemble(retrieval_results)
+
+        # Verify content structure
+        assert len(content) == 2, "Should have text and image content"
+
+        # Check text content
+        text_content = content[0]
+        assert text_content["type"] == "text"
+        assert "test document" in text_content["text"]
+
+        # Check image content
+        image_content = content[1]
+        assert image_content["type"] == "image"
+        assert "data" in image_content
+        assert "mimeType" in image_content
+        assert image_content["mimeType"] == "image/png"
+
+        # Verify base64 encoding
+        decoded = base64.b64decode(image_content["data"])
+        assert decoded == png_data, "Decoded image should match original"
+
+
+def test_multimodal_assembler_missing_image():
+    """Test multimodal assembler handles missing image files gracefully."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        assembler = MultimodalAssembler(images_base_dir=tmpdir)
+
+        retrieval_results = [
+            {
+                "text": "Document with missing image",
+                "metadata": {
+                    "images": [
+                        {
+                            "id": "missing_img",
+                            "path": "images/nonexistent.png"
+                        }
+                    ]
+                }
+            }
+        ]
+
+        content = assembler.assemble(retrieval_results)
+
+        # Should only have text content, image skipped
+        assert len(content) == 1
+        assert content[0]["type"] == "text"
+
+
+def test_multimodal_assembler_no_images():
+    """Test multimodal assembler with text-only results."""
+    assembler = MultimodalAssembler()
+
+    retrieval_results = [
+        {
+            "text": "Plain text document",
+            "metadata": {}
+        }
+    ]
+
+    content = assembler.assemble(retrieval_results)
+
+    assert len(content) == 1
+    assert content[0]["type"] == "text"
+    assert content[0]["text"] == "Plain text document"
+
+
+def test_multimodal_assembler_multiple_images():
+    """Test multimodal assembler with multiple images."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        images_dir = tmpdir_path / "images"
+        images_dir.mkdir()
+
+        # Create two test images
+        png_data = (
+            b'\x89PNG\r\n\x1a\n'
+            b'\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
+            b'\x08\x02\x00\x00\x00\x90wS\xde'
+            b'\x00\x00\x00\x0cIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
+            b'\r\n-\xb4'
+            b'\x00\x00\x00\x00IEND\xaeB`\x82'
+        )
+
+        (images_dir / "img1.png").write_bytes(png_data)
+        (images_dir / "img2.png").write_bytes(png_data)
+
+        assembler = MultimodalAssembler(images_base_dir=str(tmpdir_path))
+
+        retrieval_results = [
+            {
+                "text": "Document with two images",
+                "metadata": {
+                    "images": [
+                        {"id": "img1", "path": "images/img1.png"},
+                        {"id": "img2", "path": "images/img2.png"}
+                    ]
+                }
+            }
+        ]
+
+        content = assembler.assemble(retrieval_results)
+
+        # Should have 1 text + 2 images
+        assert len(content) == 3
+        assert content[0]["type"] == "text"
+        assert content[1]["type"] == "image"
+        assert content[2]["type"] == "image"
+
+
+def test_multimodal_assembler_mime_types():
+    """Test multimodal assembler detects correct MIME types."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        images_dir = tmpdir_path / "images"
+        images_dir.mkdir()
+
+        # Create test files with different extensions
+        test_data = b"fake image data"
+        (images_dir / "test.png").write_bytes(test_data)
+        (images_dir / "test.jpg").write_bytes(test_data)
+        (images_dir / "test.gif").write_bytes(test_data)
+
+        assembler = MultimodalAssembler(images_base_dir=str(tmpdir_path))
+
+        # Test PNG
+        result = assembler._load_image({"path": "images/test.png"})
+        assert result["mimeType"] == "image/png"
+
+        # Test JPEG
+        result = assembler._load_image({"path": "images/test.jpg"})
+        assert result["mimeType"] == "image/jpeg"
+
+        # Test GIF
+        result = assembler._load_image({"path": "images/test.gif"})
+        assert result["mimeType"] == "image/gif"
+

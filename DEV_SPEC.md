@@ -2854,13 +2854,14 @@ dashboard:
 - **测试方法**：`pytest -q tests/unit/test_get_document_summary.py`。
 - **完成状态**：✅ 已完成 - 22个测试通过
 
-### E6：多模态返回组装（Text + Image）
+### ✅ E6：多模态返回组装（Text + Image）
 - **目标**：实现 `multimodal_assembler.py`：命中 chunk 含 image_refs 时读取图片并 base64 返回 ImageContent。
 - **修改文件**：
   - `src/core/response/multimodal_assembler.py`
   - `tests/integration/test_mcp_server.py`（补图像返回用例）
 - **验收标准**：返回 content 中包含 image type，mimeType 正确，data 为 base64 字符串。
 - **测试方法**：`pytest -q tests/integration/test_mcp_server.py -k image`。
+- **完成状态**：✅ 已完成 - 4个图像测试通过
 
 ---
 
