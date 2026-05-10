@@ -37,3 +37,23 @@ try:
     EmbeddingFactory.register_provider("ollama", OllamaEmbedding)
 except ImportError:
     pass  # requests package not installed
+
+
+# Convenience function for backward compatibility
+def create_embedding_client(settings) -> BaseEmbedding:
+    """
+    创建 Embedding 客户端的便捷函数
+
+    Args:
+        settings: Settings 对象或配置字典
+
+    Returns:
+        BaseEmbedding 实例
+    """
+    # 如果是 Settings 对象，转换为字典
+    if hasattr(settings, '__dict__'):
+        settings_dict = settings.__dict__
+    else:
+        settings_dict = settings
+
+    return EmbeddingFactory.create(settings_dict)

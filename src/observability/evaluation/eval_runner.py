@@ -129,13 +129,15 @@ class EvalRunner:
             评估报告
         """
         if self.trace_context:
-            self.trace_context.log("开始评估", {"test_set": test_set_path})
+            stage = self.trace_context.record_stage("evaluation_start", {"test_set": test_set_path})
+            self.trace_context.finish_stage(stage)
 
         # 加载测试集
         test_cases = self.load_test_set(test_set_path)
 
         if self.trace_context:
-            self.trace_context.log("加载测试集", {"total_cases": len(test_cases)})
+            stage = self.trace_context.record_stage("load_test_set", {"total_cases": len(test_cases)})
+            self.trace_context.finish_stage(stage)
 
         # 运行每个测试用例
         test_results = []
@@ -159,11 +161,12 @@ class EvalRunner:
         )
 
         if self.trace_context:
-            self.trace_context.log("评估完成", {
+            stage = self.trace_context.record_stage("evaluation_complete", {
                 "total": report.total_cases,
                 "success": report.successful_cases,
                 "failed": report.failed_cases
             })
+            self.trace_context.finish_stage(stage)
 
         return report
 
@@ -195,7 +198,7 @@ class EvalRunner:
             )
 
             # 提取检索到的文档 ID
-            retrieved_ids = [result.id for result in search_results]
+            retrieved_ids = [result.chunk_id for result in search_results]
 
             # 使用评估器计算指标
             metrics = self.evaluator.evaluate(
@@ -215,7 +218,8 @@ class EvalRunner:
 
         except Exception as e:
             if self.trace_context:
-                self.trace_context.log(f"测试用例 {index} 失败", {"error": str(e)})
+                stage = self.trace_context.record_stage(f"test_case_{index}_failed", {"error": str(e)})
+                self.trace_context.finish_stage(stage)
 
             return TestResult(
                 query=test_case.query,
