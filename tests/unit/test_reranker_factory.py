@@ -27,3 +27,36 @@ class TestRerankerFactory:
         settings = {}
         reranker = RerankerFactory.create(settings)
         assert isinstance(reranker, NoneReranker)
+
+    def test_rerank_empty_candidates(self):
+        """边界测试：空候选列表"""
+        reranker = NoneReranker()
+        result = reranker.rerank("query", [])
+        assert result == []
+        assert isinstance(result, list)
+
+    def test_rerank_empty_query(self):
+        """边界测试：空查询字符串"""
+        reranker = NoneReranker()
+        candidates = [{'id': '1', 'score': 0.5}]
+        result = reranker.rerank("", candidates)
+        assert result == candidates
+
+    def test_rerank_single_candidate(self):
+        """边界测试：单个候选"""
+        reranker = NoneReranker()
+        candidates = [{'id': '1', 'score': 0.9}]
+        result = reranker.rerank("query", candidates)
+        assert len(result) == 1
+        assert result[0]['id'] == '1'
+
+    def test_rerank_preserves_structure(self):
+        """边界测试：保持候选结构完整"""
+        reranker = NoneReranker()
+        candidates = [
+            {'id': '1', 'score': 0.5, 'metadata': {'key': 'value'}},
+            {'id': '2', 'score': 0.9, 'extra_field': 'data'}
+        ]
+        result = reranker.rerank("query", candidates)
+        assert result[0]['metadata'] == {'key': 'value'}
+        assert result[1]['extra_field'] == 'data'

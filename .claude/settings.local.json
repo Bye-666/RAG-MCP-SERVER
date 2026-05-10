@@ -47,7 +47,10 @@
       "Bash(python scripts/sync_spec.py)",
       "PowerShell(pytest -xvs tests/unit/test_image_captioner_fallback.py)",
       "Bash(git commit -m ' *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\Activate.ps1; python .claude/skills/auto-coder/scripts/sync_spec.py)",
+      "PowerShell(pytest *)",
+      "PowerShell(.\\\\.venv\\\\Scripts\\\\Activate.ps1; python .claude/skills/auto-coder/scripts/sync_spec.py --force)"
     ]
   }
 }

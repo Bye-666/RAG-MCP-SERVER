@@ -2057,7 +2057,7 @@ dashboard:
 | I1 | E2E：MCP Client 侧调用模拟 | [x] | 2026/05/10 | 11个测试通过 |
 | I2 | E2E：Dashboard 冒烟测试 | [x] | 2026/05/10 | 16个测试通过 |
 | I3 | 完善 README（运行说明 + MCP + Dashboard） | [x] | 2026/05/10 | 补充配置、MCP、Dashboard、测试说明 |
-| I4 | 清理接口一致性（契约测试补齐） | [ ] | | |
+| I4 | 清理接口一致性（契约测试补齐） | [x] | 2026/05/10 | 32个测试通过 |
 | I5 | 全链路 E2E 验收 | [ ] | | |
 
 ---
@@ -3165,7 +3165,7 @@ dashboard:
   - ✅ **常见问题**：API Key 配置、依赖安装、连接问题排查（已有）
 - **测试方法**：按 README 手动走一遍。
 
-### I4：清理接口一致性（契约测试补齐）
+### I4：清理接口一致性（契约测试补齐）✅
 - **目标**：为关键抽象（VectorStore / Reranker / Evaluator / DocumentManager）补齐契约测试。
 - **修改文件**：
   - `tests/unit/test_vector_store_contract.py`（补齐 delete_by_metadata 边界）
@@ -3173,6 +3173,9 @@ dashboard:
   - `tests/unit/test_custom_evaluator.py`（补齐边界）
 - **验收标准**：`pytest -q` 全绿，且 contract tests 覆盖主要输入输出形状。
 - **测试方法**：`pytest -q`。
+- **完成状态**：✅ 已完成（2026/05/10）
+  - 补齐边界测试：空列表、top_k=0、filters、trace参数、多ground_truth等
+  - 测试结果：32个测试全部通过
 
 ### I5：全链路 E2E 验收
 - **目标**：执行完整的端到端验收流程：ingest → query via MCP → Dashboard 可视化 → evaluate。

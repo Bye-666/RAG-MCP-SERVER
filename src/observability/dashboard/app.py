@@ -15,6 +15,7 @@ from src.observability.dashboard.pages import (
     query_traces,
     query_test,
     settings,
+    evaluation_panel,
 )
 
 
@@ -38,6 +39,7 @@ def main():
         "📈 Ingestion Traces": ingestion_traces,
         "🔍 Query Test": query_test,
         "📉 Query Traces": query_traces,
+        "📊 Evaluation Panel": evaluation_panel,
         "⚙️ Settings": settings,
     }
 

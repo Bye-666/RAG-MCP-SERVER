@@ -55,3 +55,36 @@ class TestVectorStoreContract:
         result = store.get_by_ids(['1', '2'])
         assert isinstance(result, list)
         assert len(result) == 2
+
+    def test_upsert_empty_list(self):
+        """边界测试：空列表输入"""
+        store = FakeVectorStore()
+        result = store.upsert([])
+        assert isinstance(result, list)
+        assert len(result) == 0
+
+    def test_query_top_k_zero(self):
+        """边界测试：top_k=0"""
+        store = FakeVectorStore()
+        result = store.query([0.1, 0.2], top_k=0)
+        assert isinstance(result, list)
+
+    def test_query_with_filters(self):
+        """边界测试：使用filters参数"""
+        store = FakeVectorStore()
+        filters = {"category": "test"}
+        result = store.query([0.1, 0.2], top_k=5, filters=filters)
+        assert isinstance(result, list)
+
+    def test_query_with_trace(self):
+        """边界测试：传递trace参数"""
+        store = FakeVectorStore()
+        result = store.query([0.1, 0.2], top_k=5, trace={"trace_id": "test"})
+        assert isinstance(result, list)
+
+    def test_get_by_ids_empty_list(self):
+        """边界测试：空ID列表"""
+        store = FakeVectorStore()
+        result = store.get_by_ids([])
+        assert isinstance(result, list)
+        assert len(result) == 0
