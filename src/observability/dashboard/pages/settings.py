@@ -3,15 +3,11 @@
 """
 import streamlit as st
 from pathlib import Path
-import sys
 import yaml
 from typing import Dict, Any
 
-# 添加项目根目录到路径
+# 项目根目录
 project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.config.settings import Settings
 
 
 def load_config_file() -> Dict[str, Any]:
@@ -45,10 +41,8 @@ def render():
     # 加载当前配置
     if 'config' not in st.session_state:
         st.session_state.config = load_config_file()
-        st.session_state.settings = Settings()
 
     config = st.session_state.config
-    settings = st.session_state.settings
 
     # 创建标签页
     tab1, tab2, tab3, tab4, tab5 = st.tabs([

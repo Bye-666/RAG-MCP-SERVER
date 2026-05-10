@@ -3,16 +3,11 @@
 """
 import streamlit as st
 from pathlib import Path
-import sys
 import json
 from datetime import datetime
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
+from src.core.settings import load_settings
 from src.core.query_engine.hybrid_search import HybridSearch
-from src.config.settings import Settings
 
 
 def render():
@@ -24,16 +19,14 @@ def render():
     # 初始化HybridSearch
     if 'hybrid_search' not in st.session_state:
         try:
-            settings = Settings()
+            settings = load_settings()
             st.session_state.hybrid_search = HybridSearch(settings)
-            st.session_state.settings = settings
         except Exception as e:
             st.error(f"❌ 初始化失败: {str(e)}")
             st.info("请确保已配置向量存储和嵌入模型")
             return
 
     hybrid_search = st.session_state.hybrid_search
-    settings = st.session_state.settings
 
     # 查询配置
     st.subheader("⚙️ 查询配置")
