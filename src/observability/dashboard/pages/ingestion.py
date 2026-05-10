@@ -300,7 +300,7 @@ def _render_document_list(services: dict):
         with col2:
             if st.button("🔍 查看", key=f"view_{idx}"):
                 st.session_state.selected_document = doc.source_path
-                st.switch_page("pages/data_browser.py")
+                st.info("💡 提示：请在侧边栏切换到「📚 数据浏览」页面查看文档详情")
 
         with col3:
             if st.button("🗑️ 删除", key=f"delete_{idx}", type="secondary"):
