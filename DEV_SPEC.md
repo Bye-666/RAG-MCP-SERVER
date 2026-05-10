@@ -3116,12 +3116,20 @@ dashboard:
 
 ## 阶段 I：端到端验收与文档收口（目标：开箱即用的"可复现"工程）
 
-### I1：E2E：MCP Client 侧调用模拟
+### ✅ I1：E2E：MCP Client 侧调用模拟
+- **完成状态**：✅ 已完成 - 11个测试通过，1个跳过（需要真实数据）
 - **目标**：实现 `tests/e2e/test_mcp_client.py`：以子进程启动 server，模拟 tools/list + tools/call。
 - **修改文件**：
   - `tests/e2e/test_mcp_client.py`
 - **验收标准**：完整走通 query_knowledge_hub 并返回 citations。
 - **测试方法**：`pytest -q tests/e2e/test_mcp_client.py`。
+- **测试覆盖**：
+  - ✅ MCP 服务器初始化握手（initialize）
+  - ✅ 工具列表获取（tools/list）
+  - ✅ query_knowledge_hub 工具调用和 citations 格式验证
+  - ✅ get_document_summary 工具调用
+  - ✅ list_collections 工具调用
+  - ⏭️ 完整流程测试（需要真实数据和服务）
 
 ### I2：E2E：Dashboard 冒烟测试
 - **目标**：验证 Dashboard 各页面在有数据时可正常渲染、无 Python 异常。
