@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 
 from src.core.settings import load_settings
-from src.retrieval.hybrid_search import HybridSearch
+from src.core.query_engine.hybrid_search import HybridSearch
 from src.libs.evaluator.evaluator_factory import EvaluatorFactory
 from src.observability.evaluation.eval_runner import EvalRunner
 from src.observability.evaluation.composite_evaluator import create_composite_evaluator
