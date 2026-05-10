@@ -6,7 +6,7 @@ Multi-page Streamlit application for system monitoring and management.
 
 import streamlit as st
 
-from src.observability.dashboard.pages import (
+from src.observability.dashboard.page_modules import (
     overview,
     traces,
     data_browser,
