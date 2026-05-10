@@ -1,23 +1,23 @@
 """
-Trace Viewer page for Dashboard.
+追踪查看器页面。
 
-Displays trace logs and performance metrics.
+显示追踪日志和性能指标。
 """
 
 import streamlit as st
 
 
 def render():
-    """Render the trace viewer page"""
-    st.title("📊 Trace Viewer")
-    st.info("🚧 This page is under construction (Task G2)")
+    """渲染追踪查看器页面"""
+    st.title("📊 追踪总览")
+    st.info("🚧 此页面正在开发中（任务 G2）")
     st.markdown("""
-    ### Planned Features:
-    - View trace logs from JSON Lines files
-    - Filter by trace type (ingestion/query)
-    - Display stage-by-stage timing breakdown
-    - Search and filter capabilities
-    - Export trace data
+    ### 计划功能：
+    - 查看 JSON Lines 文件中的追踪日志
+    - 按追踪类型过滤（摄取/查询）
+    - 显示各阶段耗时分解
+    - 搜索和过滤功能
+    - 导出追踪数据
     """)
 
 

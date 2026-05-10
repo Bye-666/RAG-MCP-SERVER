@@ -24,7 +24,7 @@ def main():
 
     # Page configuration
     st.set_page_config(
-        page_title="RAG-MCP Dashboard",
+        page_title="RAG-MCP 管理平台",
         page_icon="🚀",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -32,22 +32,22 @@ def main():
 
     # Navigation
     pages = {
-        "🏠 Overview": overview,
-        "📊 Traces": traces,
-        "📚 Data Browser": data_browser,
-        "📥 Ingestion": ingestion,
-        "📈 Ingestion Traces": ingestion_traces,
-        "🔍 Query Test": query_test,
-        "📉 Query Traces": query_traces,
-        "📊 Evaluation Panel": evaluation_panel,
-        "⚙️ Settings": settings,
+        "🏠 系统总览": overview,
+        "📊 追踪总览": traces,
+        "📚 数据浏览": data_browser,
+        "📥 摄取管理": ingestion,
+        "📈 摄取追踪": ingestion_traces,
+        "🔍 查询测试": query_test,
+        "📉 查询追踪": query_traces,
+        "📊 评估面板": evaluation_panel,
+        "⚙️ 系统设置": settings,
     }
 
     # Sidebar navigation
-    st.sidebar.title("RAG-MCP Dashboard")
+    st.sidebar.title("RAG-MCP 管理平台")
     st.sidebar.markdown("---")
 
-    selection = st.sidebar.radio("Navigation", list(pages.keys()))
+    selection = st.sidebar.radio("导航", list(pages.keys()))
 
     st.sidebar.markdown("---")
     st.sidebar.caption("v0.1.0 | Task G1")

@@ -1,23 +1,23 @@
 """
-Query Test page for Dashboard.
+查询测试页面。
 
-Test queries and view results.
+测试查询并查看结果。
 """
 
 import streamlit as st
 
 
 def render():
-    """Render the query test page"""
-    st.title("🔍 Query Test")
-    st.info("🚧 This page is under construction (Task G5)")
+    """渲染查询测试页面"""
+    st.title("🔍 查询测试")
+    st.info("🚧 此页面正在开发中（任务 G5）")
     st.markdown("""
-    ### Planned Features:
-    - Interactive query input
-    - View retrieved chunks and scores
-    - Display multimodal results (text + images)
-    - Adjust retrieval parameters
-    - Compare different query strategies
+    ### 计划功能：
+    - 交互式查询输入
+    - 查看检索到的 Chunk 和分数
+    - 显示多模态结果（文本 + 图片）
+    - 调整检索参数
+    - 比较不同查询策略
     """)
 
 
