@@ -2056,7 +2056,7 @@ dashboard:
 |---------|---------|------|---------|------|
 | I1 | E2E：MCP Client 侧调用模拟 | [x] | 2026/05/10 | 11个测试通过 |
 | I2 | E2E：Dashboard 冒烟测试 | [x] | 2026/05/10 | 16个测试通过 |
-| I3 | 完善 README（运行说明 + MCP + Dashboard） | [ ] | | |
+| I3 | 完善 README（运行说明 + MCP + Dashboard） | [x] | 2026/05/10 | 补充配置、MCP、Dashboard、测试说明 |
 | I4 | 清理接口一致性（契约测试补齐） | [ ] | | |
 | I5 | 全链路 E2E 验收 | [ ] | | |
 
@@ -3151,17 +3151,18 @@ dashboard:
   - ✅ 页面命名规范检查
   - ✅ 目录结构完整性验证
 
-### I3：完善 README（运行说明 + 测试说明 + MCP 配置 + Dashboard 使用）
+### ✅ I3：完善 README（运行说明 + 测试说明 + MCP 配置 + Dashboard 使用）
+- **完成状态**：✅ 已完成
 - **目标**：让新用户能在 10 分钟内跑通 ingest + query + dashboard + tests，并能在 Copilot/Claude 中使用。
 - **修改文件**：
   - `README.md`
 - **验收标准**：README 包含以下章节：
-  - **快速开始**：安装依赖、配置 API Key、运行首次摄取
-  - **配置说明**：`settings.yaml` 各字段含义
-  - **MCP 配置示例**：GitHub Copilot `mcp.json` 与 Claude Desktop `claude_desktop_config.json`
-  - **Dashboard 使用指南**：启动命令、各页面功能说明、截图示例
-  - **运行测试**：单元测试、集成测试、E2E 测试命令
-  - **常见问题**：API Key 配置、依赖安装、连接问题排查
+  - ✅ **快速开始**：安装依赖、配置 API Key、运行首次摄取
+  - ✅ **配置说明**：`settings.yaml` 各字段含义
+  - ✅ **MCP 配置示例**：GitHub Copilot `mcp.json` 与 Claude Desktop `claude_desktop_config.json`
+  - ✅ **Dashboard 使用指南**：启动命令、各页面功能说明
+  - ✅ **运行测试**：单元测试、集成测试、E2E 测试命令
+  - ✅ **常见问题**：API Key 配置、依赖安装、连接问题排查（已有）
 - **测试方法**：按 README 手动走一遍。
 
 ### I4：清理接口一致性（契约测试补齐）

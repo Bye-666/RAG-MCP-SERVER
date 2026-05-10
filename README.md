@@ -122,6 +122,229 @@ Agent 会自动引导你完成全部配置流程。
 
 > 💡 如果不熟悉 Skill 的使用方式，请观看配套笔记中的 **Setup Skill 使用讲解视频**。
 
+### 3. 手动配置（可选）
+
+如果你想手动配置而不使用 Setup Skill，可以按以下步骤操作：
+
+#### 3.1 安装依赖
+
+```bash
+# 创建虚拟环境
+python -m venv .venv
+
+# 激活虚拟环境
+# Windows:
+.\.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+```
+
+#### 3.2 配置 API Key
+
+编辑 `config/settings.yaml`，填入你的 API Key 和配置：
+
+```yaml
+config:
+  llm:
+    provider: openai  # 或 azure, ollama, deepseek
+    api_key: your-api-key-here
+    model: gpt-4
+    
+  embedding:
+    provider: openai  # 或 azure, ollama
+    api_key: your-api-key-here
+    model: text-embedding-3-small
+    
+  vector_store:
+    provider: chroma  # 或 qdrant
+    persist_directory: ./data/chroma
+    collection_name: rag_collection
+    
+  retrieval:
+    top_k: 10
+    dense_weight: 0.5
+    sparse_weight: 0.5
+    
+  rerank:
+    enabled: true
+    backend: llm  # 或 cross_encoder, none
+    top_n: 5
+```
+
+#### 3.3 运行首次摄取
+
+```bash
+# 摄取示例文档
+python scripts/ingest.py --path tests/fixtures/sample_documents/ --collection default
+
+# 查看摄取结果
+python scripts/query.py --query "测试查询" --top-k 5
+```
+
+#### 3.4 启动 Dashboard
+
+```bash
+streamlit run src/observability/dashboard/app.py
+```
+
+访问 http://localhost:8501 查看 Dashboard。
+
+---
+
+## ⚙️ 配置说明
+
+### settings.yaml 字段说明
+
+| 配置项 | 说明 | 可选值 |
+|--------|------|--------|
+| `llm.provider` | LLM 提供商 | `openai`, `azure`, `ollama`, `deepseek` |
+| `llm.api_key` | API 密钥 | 你的 API Key |
+| `llm.model` | 模型名称 | `gpt-4`, `gpt-3.5-turbo`, 等 |
+| `embedding.provider` | Embedding 提供商 | `openai`, `azure`, `ollama` |
+| `embedding.model` | Embedding 模型 | `text-embedding-3-small`, 等 |
+| `vector_store.provider` | 向量数据库 | `chroma`, `qdrant` |
+| `vector_store.persist_directory` | 数据持久化目录 | 本地路径 |
+| `retrieval.top_k` | 检索返回数量 | 整数，建议 5-20 |
+| `retrieval.dense_weight` | Dense 检索权重 | 0.0-1.0 |
+| `retrieval.sparse_weight` | Sparse 检索权重 | 0.0-1.0 |
+| `rerank.enabled` | 是否启用重排 | `true`, `false` |
+| `rerank.backend` | 重排后端 | `llm`, `cross_encoder`, `none` |
+
+---
+
+## 🔌 MCP 配置
+
+### GitHub Copilot 配置
+
+在 VS Code 中，创建或编辑 `.vscode/mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "rag-knowledge-hub": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server.server"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  }
+}
+```
+
+### Claude Desktop 配置
+
+编辑 Claude Desktop 配置文件：
+
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`  
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "rag-knowledge-hub": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server.server"],
+      "cwd": "/path/to/Modular-RAG-MCP-Server",
+      "env": {
+        "PYTHONPATH": "/path/to/Modular-RAG-MCP-Server"
+      }
+    }
+  }
+}
+```
+
+### 可用工具
+
+配置完成后，在 Copilot/Claude 中可以使用以下工具：
+
+- `query_knowledge_hub`: 查询知识库
+- `list_collections`: 列出所有集合
+- `get_document_summary`: 获取文档摘要
+
+---
+
+## 📊 Dashboard 使用指南
+
+### 启动 Dashboard
+
+```bash
+streamlit run src/observability/dashboard/app.py
+```
+
+默认访问地址：http://localhost:8501
+
+### 页面功能说明
+
+| 页面 | 功能 | 说明 |
+|------|------|------|
+| **🏠 Overview** | 系统总览 | 查看系统配置、数据统计、Provider 信息 |
+| **📊 Traces** | 追踪总览 | 查看所有 Ingestion 和 Query 追踪记录 |
+| **📚 Data Browser** | 数据浏览 | 浏览已摄取的文档、Chunk、图片 |
+| **📥 Ingestion** | 摄取管理 | 上传文档、触发摄取、查看进度 |
+| **📈 Ingestion Traces** | 摄取追踪 | 查看摄取历史、阶段耗时瀑布图 |
+| **🔍 Query Test** | 查询测试 | 测试查询、查看检索结果 |
+| **📉 Query Traces** | 查询追踪 | 查看查询历史、Dense/Sparse 对比 |
+| **📊 Evaluation Panel** | 评估面板 | 运行评估、查看指标、历史趋势 |
+| **⚙️ Settings** | 系统设置 | 查看和修改配置 |
+
+### 使用流程
+
+1. **上传文档**：在 Ingestion 页面上传 PDF 文档
+2. **查看数据**：在 Data Browser 页面浏览摄取的内容
+3. **测试查询**：在 Query Test 页面测试检索效果
+4. **查看追踪**：在 Traces 页面查看详细的执行过程
+5. **运行评估**：在 Evaluation Panel 页面评估系统性能
+
+---
+
+## 🧪 运行测试
+
+### 运行所有测试
+
+```bash
+pytest
+```
+
+### 按类型运行测试
+
+```bash
+# 单元测试
+pytest tests/unit/ -v
+
+# 集成测试
+pytest tests/integration/ -v
+
+# E2E 测试
+pytest tests/e2e/ -v
+```
+
+### 运行特定测试
+
+```bash
+# 测试 MCP Client
+pytest tests/e2e/test_mcp_client.py -v
+
+# 测试 Dashboard
+pytest tests/e2e/test_dashboard_smoke.py -v
+
+# 测试召回率
+pytest tests/e2e/test_recall.py -v
+```
+
+### 查看测试覆盖率
+
+```bash
+pytest --cov=src --cov-report=html
+```
+
+生成的报告在 `htmlcov/index.html`。
+
 ---
 
 ## 🎯 谁适合用这个项目 & 怎么用
