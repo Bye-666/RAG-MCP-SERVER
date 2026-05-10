@@ -17,22 +17,19 @@ from src.libs.loader.file_integrity import SQLiteIntegrityChecker
 from src.ingestion.document_manager import DocumentManager
 from src.observability.dashboard.services.data_service import DataService
 from src.ingestion.pipeline import IngestionPipeline, PipelineConfig
-from src.libs.loader.pdf_loader import PDFLoader
-from src.ingestion.chunker import DocumentChunker
-from src.ingestion.transforms.chunk_refiner import ChunkRefiner
-from src.ingestion.transforms.metadata_enricher import MetadataEnricher
-from src.ingestion.transforms.image_captioner import ImageCaptioner
-from src.ingestion.encoders.dense_encoder import DenseEncoder
-from src.ingestion.encoders.sparse_encoder import SparseEncoder
-from src.ingestion.storage.batch_processor import BatchProcessor
+from src.libs.loader.pdf_loader import PdfLoader
+from src.ingestion.chunking.document_chunker import DocumentChunker
+from src.ingestion.transform.chunk_refiner import ChunkRefiner
+from src.ingestion.transform.metadata_enricher import MetadataEnricher
+from src.ingestion.transform.image_captioner import ImageCaptioner
+from src.ingestion.embedding.dense_encoder import DenseEncoder
+from src.ingestion.embedding.sparse_encoder import SparseEncoder
+from src.ingestion.embedding.batch_processor import BatchProcessor
 from src.ingestion.storage.vector_upserter import VectorUpserter
-from src.libs.factory import (
-    create_llm,
-    create_embedding,
-    create_splitter,
-    create_vector_store,
-    create_vision_llm
-)
+from src.libs.llm.llm_factory import LLMFactory
+from src.libs.embedding.embedding_factory import EmbeddingFactory
+from src.libs.splitter.splitter_factory import SplitterFactory
+from src.libs.vector_store.vector_store_factory import VectorStoreFactory
 
 
 def _init_services():
@@ -82,15 +79,17 @@ def _create_pipeline(services: dict, on_progress: Optional[Callable] = None) -> 
     """创建 Ingestion Pipeline"""
     settings = services["settings"]
 
-    # 创建组件
-    llm = create_llm(settings.llm)
-    embedding = create_embedding(settings.embedding)
-    splitter = create_splitter(settings.splitter.get("splitter", {}))
-    vector_store = create_vector_store(settings.vector_store)
-    vision_llm = create_vision_llm(settings.llm)
+    # 创建组件（使用工厂类）
+    settings_dict = settings.__dict__ if hasattr(settings, '__dict__') else settings
+    llm = LLMFactory.create(settings_dict)
+    embedding = EmbeddingFactory.create(settings_dict)
+    splitter = SplitterFactory.create(settings_dict)
+    vector_store = VectorStoreFactory.create(settings_dict)
+    # vision_llm 暂时跳过，因为没有统一的 VisionLLMFactory
+    vision_llm = None  # TODO: 实现 VisionLLMFactory
 
     # 创建 Pipeline 组件
-    loader = PDFLoader()
+    loader = PdfLoader()
     chunker = DocumentChunker(splitter=splitter)
 
     transforms = [
