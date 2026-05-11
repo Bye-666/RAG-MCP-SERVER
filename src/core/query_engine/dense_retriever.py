@@ -96,10 +96,13 @@ class DenseRetriever:
                 "has_filters": filters is not None
             })
 
+        # 将空字典转换为 None（ChromaDB 不接受空字典）
+        query_filters = filters if filters else None
+
         raw_results = self.vector_store.query(
             vector=query_vector,
             top_k=top_k,
-            filters=filters,
+            filters=query_filters,
             trace=trace
         )
 

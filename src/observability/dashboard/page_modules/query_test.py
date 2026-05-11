@@ -36,7 +36,7 @@ def render():
         top_k = st.number_input("检索数量 (top_k)", min_value=1, max_value=50, value=5)
 
     with col2:
-        use_rerank = st.checkbox("启用重排序 (Rerank)", value=True)
+        use_rerank = st.checkbox("启用重排序 (Rerank)", value=False, disabled=True)
 
     with col3:
         rerank_top_k = st.number_input(
@@ -44,16 +44,17 @@ def render():
             min_value=1,
             max_value=top_k,
             value=min(3, top_k),
-            disabled=not use_rerank
+            disabled=True
         )
 
     # 高级配置
     with st.expander("🔧 高级配置"):
+        st.info("ℹ️ Dense/Sparse权重和重排序功能暂未在后端实现，当前仅支持基础混合检索")
         col1, col2 = st.columns(2)
         with col1:
-            dense_weight = st.slider("Dense权重", 0.0, 1.0, 0.5, 0.1)
+            dense_weight = st.slider("Dense权重", 0.0, 1.0, 0.5, 0.1, disabled=True)
         with col2:
-            sparse_weight = st.slider("Sparse权重", 0.0, 1.0, 0.5, 0.1)
+            sparse_weight = st.slider("Sparse权重", 0.0, 1.0, 0.5, 0.1, disabled=True)
 
         enable_trace = st.checkbox("启用追踪", value=True)
 
@@ -92,17 +93,21 @@ def render():
                         return
 
                 # 执行查询
+                # 注意：当前 HybridSearch 不支持 dense_weight, sparse_weight, rerank 参数
+                # 这些参数在界面上显示但暂未实现
                 trace_id = f"query_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}" if enable_trace else None
+
+                # 创建 TraceContext（如果启用追踪）
+                trace = None
+                if enable_trace:
+                    from src.core.trace import TraceContext
+                    trace = TraceContext(trace_id=trace_id)
 
                 results = hybrid_search.search(
                     query=query_text.strip(),
                     top_k=top_k,
                     filters=filters,
-                    dense_weight=dense_weight,
-                    sparse_weight=sparse_weight,
-                    use_rerank=use_rerank,
-                    rerank_top_k=rerank_top_k if use_rerank else None,
-                    trace_id=trace_id
+                    trace=trace
                 )
 
                 # 保存结果到session_state
@@ -148,7 +153,7 @@ def render():
                 st.markdown("**文档内容**")
                 st.text_area(
                     "内容",
-                    value=result.content,
+                    value=result.text,
                     height=150,
                     key=f"result_content_{idx}",
                     disabled=True
@@ -167,9 +172,9 @@ def render():
                 with col2:
                     st.markdown("**检索信息**")
                     st.write(f"- **分数**: {result.score:.4f}")
-                    st.write(f"- **文档ID**: `{result.doc_id}`")
-                    if hasattr(result, 'chunk_index'):
-                        st.write(f"- **分块索引**: {result.chunk_index}")
+                    st.write(f"- **块ID**: `{result.chunk_id}`")
+                    if 'chunk_index' in result.metadata:
+                        st.write(f"- **分块索引**: {result.metadata['chunk_index']}")
 
         # 追踪信息
         if trace_id:
