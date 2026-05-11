@@ -166,38 +166,52 @@ class DocumentManager:
             # 1. Get all chunks for this document from vector store
             chunks = self.chroma_store.get_by_metadata({"source_path": source_path})
 
-            if not chunks:
-                result.error = f"No chunks found for source_path: {source_path}"
-                return result
+            # 2. If chunks exist, delete from vector store and BM25
+            if chunks:
+                chunk_ids = [chunk["id"] for chunk in chunks]
 
-            chunk_ids = [chunk["id"] for chunk in chunks]
+                # Delete from vector store
+                chunks_deleted = self.chroma_store.delete_by_metadata({"source_path": source_path})
+                result.chunks_deleted = chunks_deleted
 
-            # 2. Delete from vector store
-            chunks_deleted = self.chroma_store.delete_by_metadata({"source_path": source_path})
-            result.chunks_deleted = chunks_deleted
+                # Delete from BM25 index
+                bm25_deleted = self.bm25_indexer.remove_document(chunk_ids)
+                result.bm25_postings_deleted = bm25_deleted
 
-            # 3. Delete from BM25 index
-            bm25_deleted = self.bm25_indexer.remove_document(chunk_ids)
-            result.bm25_postings_deleted = bm25_deleted
+                # Save updated BM25 index
+                self.bm25_indexer.save()
 
-            # Save updated BM25 index
-            self.bm25_indexer.save()
+                # Get file_hash from metadata for integrity checker
+                file_hash = chunks[0].get("metadata", {}).get("file_hash")
+            else:
+                # No chunks found, try to get file_hash from integrity checker
+                file_hash = None
+                processed_files = self.file_integrity.list_processed()
+                for file_record in processed_files:
+                    if file_record.get("file_path") == source_path:
+                        file_hash = file_record.get("file_hash")
+                        break
 
-            # 4. Delete images
+            # 3. Delete images
             try:
                 images_deleted = self.image_storage.delete_images(source_path)
                 result.images_deleted = images_deleted
             except Exception:
                 pass  # Images might not exist
 
-            # 5. Remove from integrity checker
-            # Get file_hash from metadata
-            file_hash = chunks[0].get("metadata", {}).get("file_hash")
+            # 4. Remove from integrity checker
             if file_hash:
                 integrity_deleted = self.file_integrity.remove_record(file_hash)
                 result.integrity_record_deleted = integrity_deleted
 
-            result.success = True
+            # Consider success if we deleted anything or removed integrity record
+            result.success = (result.chunks_deleted > 0 or
+                            result.images_deleted > 0 or
+                            result.integrity_record_deleted)
+
+            if not result.success and not chunks:
+                result.error = f"No data found for source_path: {source_path}"
+
             return result
 
         except Exception as e:

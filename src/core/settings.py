@@ -11,6 +11,7 @@ class Settings:
     retrieval: dict
     observability: dict
     splitter: dict = None  # Optional splitter configuration
+    storage: dict = None  # Optional storage configuration
 
     def __post_init__(self):
         # Provide default splitter config if not specified
@@ -21,6 +22,12 @@ class Settings:
                     "chunk_size": 500,
                     "chunk_overlap": 50
                 }
+            }
+
+        # Provide default storage config if not specified
+        if self.storage is None:
+            self.storage = {
+                "upload_directory": "./data/uploads"
             }
 
 

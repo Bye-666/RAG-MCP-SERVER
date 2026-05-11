@@ -5,7 +5,6 @@ Ingestion 管理页面。
 """
 
 import streamlit as st
-import tempfile
 from pathlib import Path
 from typing import Optional, Callable
 
@@ -80,7 +79,29 @@ def _create_pipeline(services: dict, on_progress: Optional[Callable] = None) -> 
     settings = services["settings"]
 
     # 创建组件（使用工厂类）
-    settings_dict = settings.__dict__ if hasattr(settings, '__dict__') else settings
+    # 将 Settings dataclass 转换为字典格式
+    if hasattr(settings, '__dict__'):
+        # Handle splitter's nested structure: settings.splitter = {'splitter': {...}}
+        # We need to flatten it to {'splitter': {...}} for the factory
+        splitter_config = settings.splitter
+        if 'splitter' in splitter_config:
+            # Already nested, use as-is
+            splitter_dict = splitter_config
+        else:
+            # Not nested, wrap it
+            splitter_dict = {'splitter': splitter_config}
+
+        settings_dict = {
+            'llm': settings.llm,
+            'embedding': settings.embedding,
+            'vector_store': settings.vector_store,
+            'retrieval': settings.retrieval,
+            'observability': settings.observability,
+            'splitter': splitter_dict.get('splitter', splitter_config)  # Extract inner dict
+        }
+    else:
+        settings_dict = settings
+
     llm = LLMFactory.create(settings_dict)
     embedding = EmbeddingFactory.create(settings_dict)
     splitter = SplitterFactory.create(settings_dict)
@@ -90,26 +111,24 @@ def _create_pipeline(services: dict, on_progress: Optional[Callable] = None) -> 
 
     # 创建 Pipeline 组件
     loader = PdfLoader()
-    chunker = DocumentChunker(splitter=splitter)
+    chunker = DocumentChunker(settings)
 
     transforms = [
-        ChunkRefiner(llm=llm),
-        MetadataEnricher(),
-        ImageCaptioner(vision_llm=vision_llm)
+        ChunkRefiner(settings, llm=llm),
+        MetadataEnricher(settings, llm=llm),
+        ImageCaptioner(settings, vision_llm=vision_llm)
     ]
 
-    dense_encoder = DenseEncoder(embedding=embedding)
+    dense_encoder = DenseEncoder(embedding_model=embedding)
     sparse_encoder = SparseEncoder()
 
     batch_processor = BatchProcessor(
         dense_encoder=dense_encoder,
-        sparse_encoder=sparse_encoder,
-        bm25_indexer=services["bm25_indexer"]
+        sparse_encoder=sparse_encoder
     )
 
     vector_upserter = VectorUpserter(
-        vector_store=vector_store,
-        bm25_indexer=services["bm25_indexer"]
+        vector_store=vector_store
     )
 
     # 创建 Pipeline
@@ -174,10 +193,26 @@ def _process_file(
     enable_transforms: bool
 ):
     """处理上传的文件"""
-    # 创建临时文件
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        tmp_path = tmp_file.name
+    # 从配置获取上传目录
+    settings = services["settings"]
+    upload_dir = Path(settings.storage.get("upload_directory", "./data/uploads"))
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    # 保存文件到持久化目录，使用原始文件名
+    original_filename = uploaded_file.name
+    file_path = upload_dir / original_filename
+
+    # 如果文件已存在，添加时间戳避免冲突
+    if file_path.exists():
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        stem = file_path.stem
+        suffix = file_path.suffix
+        file_path = upload_dir / f"{stem}_{timestamp}{suffix}"
+
+    # 写入文件
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.read())
 
     try:
         # 显示进度区域
@@ -231,10 +266,10 @@ def _process_file(
             collection=collection
         )
 
-        # 执行摄取
+        # 执行摄取（使用持久化路径）
         with status_container:
             with st.spinner("正在摄取文档..."):
-                result = pipeline.ingest_file(tmp_path, config=config)
+                result = pipeline.ingest_file(str(file_path), config=config)
 
         # 显示结果
         st.markdown("---")
@@ -243,8 +278,11 @@ def _process_file(
             st.info(f"文件哈希: `{result['file_hash']}`")
         elif result.get("error"):
             st.error(f"❌ 摄取失败: {result['error']}")
+            # 摄取失败时删除文件
+            file_path.unlink(missing_ok=True)
         else:
             st.success(f"✅ 摄取成功！")
+            st.info(f"📁 文件已保存至: `{file_path}`")
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Chunk 数量", result.get("chunk_count", 0))
@@ -255,9 +293,8 @@ def _process_file(
 
     except Exception as e:
         st.error(f"❌ 处理失败: {str(e)}")
-    finally:
-        # 清理临时文件
-        Path(tmp_path).unlink(missing_ok=True)
+        # 处理失败时删除文件
+        file_path.unlink(missing_ok=True)
 
 
 def _render_document_list(services: dict):

@@ -11,5 +11,7 @@ config:
     vector_size: 1536
   retrieval:
     top_k: 5
+  storage:
+    upload_directory: ./data/uploads
   observability:
     log_level: INFO
