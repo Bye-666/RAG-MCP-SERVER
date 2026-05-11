@@ -4,6 +4,7 @@ from .openai_llm import OpenAILLM
 from .azure_llm import AzureLLM
 from .deepseek_llm import DeepSeekLLM
 from .ollama_llm import OllamaLLM
+from .qwen_llm import QwenLLM
 from typing import Dict, Type
 
 
@@ -85,6 +86,7 @@ LLMFactory.register_provider("openai", OpenAILLM)
 LLMFactory.register_provider("azure", AzureLLM)
 LLMFactory.register_provider("deepseek", DeepSeekLLM)
 LLMFactory.register_provider("ollama", OllamaLLM)
+LLMFactory.register_provider("qwen", QwenLLM)
 
 # Register Vision LLM providers
 try:

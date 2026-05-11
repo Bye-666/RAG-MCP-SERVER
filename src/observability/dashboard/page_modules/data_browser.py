@@ -24,7 +24,7 @@ def _init_services():
 
         # 初始化存储组件
         chroma_store = ChromaStore(
-            collection_name=settings.vector_store.get("collection", "default"),
+            collection_name=settings.vector_store.get("collection_name", "default"),
             persist_directory=settings.vector_store.get("persist_directory", "data/db/chroma")
         )
 
