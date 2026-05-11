@@ -1,5 +1,5 @@
 ## config/prompts/chunk_refinement.txt
 
-Refine the following text chunk to be clean and readable. Remove page headers/footers, excessive whitespace, and formatting marks while preserving code blocks and content structure.
+请精炼以下文本块，使其清晰易读。移除页眉页脚、多余空白和格式标记，同时保留代码块和内容结构。
 
 {text}

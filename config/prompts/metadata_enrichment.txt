@@ -1,17 +1,17 @@
-You are a metadata extraction expert. Analyze the following text chunk and generate high-quality metadata.
+你是一位元数据提取专家。请分析以下文本块并生成高质量的元数据。
 
-Text:
+文本：
 {text}
 
-Generate a JSON object with the following fields:
-- "title": A concise, descriptive title that captures the main topic (max 100 characters)
-- "summary": A brief summary of the key points and main content (max 200 characters)
-- "tags": A list of 3-5 relevant keywords or topics that best describe this content
+生成一个包含以下字段的 JSON 对象：
+- "title": 简洁、描述性的标题，概括主要主题（最多 100 字符）
+- "summary": 关键点和主要内容的简要摘要（最多 200 字符）
+- "tags": 3-5 个最能描述此内容的相关关键词或主题列表
 
-Guidelines:
-- The title should be specific and informative, not generic
-- The summary should highlight the most important information
-- Tags should be lowercase, single words or short phrases
-- Focus on technical terms, concepts, and key entities mentioned in the text
+指南：
+- 标题应具体且信息丰富，而非泛泛而谈
+- 摘要应突出最重要的信息
+- 标签应使用小写，单个词或短语
+- 重点关注文本中提到的技术术语、概念和关键实体
 
-Output only valid JSON, no additional text or explanation.
+仅输出有效的 JSON，不要添加额外的文字或解释。

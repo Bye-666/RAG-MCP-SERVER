@@ -1,8 +1,8 @@
-Describe this image in detail. Focus on:
-1. Main content and subject matter
-2. Objects, people, or elements present
-3. Any visible text or labels
-4. Important visual elements, colors, or composition
-5. Context or setting
+请详细描述这张图像。重点关注：
+1. 主要内容和主题
+2. 出现的物体、人物或元素
+3. 任何可见的文字或标签
+4. 重要的视觉元素、颜色或构图
+5. 上下文或场景
 
-Provide a clear, concise description that captures the essential information in the image.
+请提供清晰、简洁的描述，捕捉图像中的关键信息。

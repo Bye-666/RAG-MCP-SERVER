@@ -1,15 +1,15 @@
-You are a relevance ranking assistant. Given a user query and a list of candidate text chunks, rank them by relevance to the query.
+你是一位相关性排序助手。给定用户查询和候选文本块列表，请按与查询的相关性对它们进行排序。
 
-Query: {query}
+查询：{query}
 
-Candidates:
+候选项：
 {candidates}
 
-Instructions:
-1. Analyze each candidate's relevance to the query
-2. Consider semantic meaning, not just keyword matching
-3. Return ONLY a JSON object with ranked candidate IDs in order of relevance (most relevant first)
-4. Use this exact format: {{"ranked_ids": [id1, id2, id3, ...]}}
-5. Include ALL candidate IDs in your ranking
+指令：
+1. 分析每个候选项与查询的相关性
+2. 考虑语义含义，而不仅仅是关键词匹配
+3. 仅返回一个 JSON 对象，包含按相关性排序的候选项 ID（最相关的排在前面）
+4. 使用此确切格式：{{"ranked_ids": [id1, id2, id3, ...]}}
+5. 在排序中包含所有候选项 ID
 
-Output the JSON object now:
+现在输出 JSON 对象：
