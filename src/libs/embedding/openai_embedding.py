@@ -1,10 +1,15 @@
 from typing import List
 from .base_embedding import BaseEmbedding
 from openai import OpenAI
+import time
 
 class OpenAIEmbedding(BaseEmbedding):
     def __init__(self, api_key: str, model: str = "text-embedding-3-small", api_base: str = None, **kwargs):
-        client_kwargs = {"api_key": api_key}
+        client_kwargs = {
+            "api_key": api_key,
+            "timeout": kwargs.get("timeout", 60.0),  # 默认 60 秒超时
+            "max_retries": kwargs.get("max_retries", 3)  # 默认重试 3 次
+        }
         if api_base:
             client_kwargs["base_url"] = api_base
         self.client = OpenAI(**client_kwargs)
@@ -48,7 +53,10 @@ class OpenAIEmbedding(BaseEmbedding):
                         embeddings.append([0.0] * dim)
             except Exception as e:
                 # 如果 API 调用失败，为当前批次的所有文本返回零向量
-                print(f"调用 OpenAI API 时出错: {str(e)}")
+                error_type = type(e).__name__
+                print(f"⚠️ 调用 Embedding API 时出错 ({error_type}): {str(e)}")
+                print(f"   批次大小: {len(batch)}, 模型: {self.model}")
+                print(f"   将使用零向量作为后备方案")
                 dim = 1536 if "3-small" in self.model else 3072 if "3-large" in self.model else 1536
                 embeddings.extend([[0.0] * dim for _ in range(len(batch))])
 
