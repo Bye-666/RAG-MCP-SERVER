@@ -55,13 +55,32 @@ class BM25Indexer:
         num_documents: Total number of documents in the index
     """
 
-    def __init__(self, index_dir: str = "data/db/bm25"):
+    def __init__(self, index_dir=None, settings=None):
         """Initialize the BM25 indexer
 
         Args:
-            index_dir: Directory to store index files
+            index_dir: Directory to store index files (string) or Settings object for backward compatibility
+            settings: Optional Settings object (for keyword argument compatibility)
         """
-        self.index_dir = index_dir
+        # Determine index_dir based on arguments
+        final_index_dir = "data/db/bm25"  # default
+
+        # Handle different calling patterns
+        if settings is not None:
+            # Called with settings=settings keyword argument
+            # Use default index_dir (could extract from settings in future)
+            pass
+        elif index_dir is not None:
+            # Check if it's a Settings object (has __dict__ or is not a string)
+            if isinstance(index_dir, str):
+                # It's an index_dir string
+                final_index_dir = index_dir
+            else:
+                # It's a Settings object passed as first positional arg
+                # Use default index_dir
+                pass
+
+        self.index_dir = final_index_dir
         self.index: Dict[str, TermIndex] = {}
         self.num_documents: int = 0
 

@@ -3,8 +3,11 @@ from .base_embedding import BaseEmbedding
 from openai import OpenAI
 
 class OpenAIEmbedding(BaseEmbedding):
-    def __init__(self, api_key: str, model: str = "text-embedding-3-small", **kwargs):
-        self.client = OpenAI(api_key=api_key)
+    def __init__(self, api_key: str, model: str = "text-embedding-3-small", api_base: str = None, **kwargs):
+        client_kwargs = {"api_key": api_key}
+        if api_base:
+            client_kwargs["base_url"] = api_base
+        self.client = OpenAI(**client_kwargs)
         self.model = model
         self.batch_size = kwargs.get("batch_size", 100)  # OpenAI推荐最大为2048，但小批量更稳定
 

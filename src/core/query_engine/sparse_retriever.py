@@ -45,7 +45,12 @@ class SparseRetriever:
         else:
             # Load BM25 index from default location
             self.bm25_indexer = BM25Indexer(settings=settings)
-            self.bm25_indexer.load()
+            # Try to load index, but don't fail if it doesn't exist yet
+            try:
+                self.bm25_indexer.load()
+            except FileNotFoundError:
+                # Index doesn't exist yet - will be created during ingestion
+                pass
 
         if vector_store is not None:
             self.vector_store = vector_store

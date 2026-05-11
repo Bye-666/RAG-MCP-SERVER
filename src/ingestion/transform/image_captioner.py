@@ -46,7 +46,10 @@ class ImageCaptioner(BaseTransform):
             prompt_path: Optional path to prompt template file
         """
         self.settings = settings
-        self.use_vision = getattr(settings.ingestion.image_captioner, 'use_vision', False)
+        # Safely check for ingestion.image_captioner.use_vision configuration
+        self.use_vision = False
+        if hasattr(settings, 'ingestion') and hasattr(settings.ingestion, 'image_captioner'):
+            self.use_vision = getattr(settings.ingestion.image_captioner, 'use_vision', False)
 
         # Initialize Vision LLM if enabled
         self.vision_llm = None

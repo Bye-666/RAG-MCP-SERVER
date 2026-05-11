@@ -48,7 +48,10 @@ class MetadataEnricher(BaseTransform):
             prompt_path: Optional path to prompt template file
         """
         self.settings = settings
-        self.use_llm = getattr(settings.ingestion.metadata_enricher, 'use_llm', False)
+        # Safely check for ingestion.metadata_enricher.use_llm configuration
+        self.use_llm = False
+        if hasattr(settings, 'ingestion') and hasattr(settings.ingestion, 'metadata_enricher'):
+            self.use_llm = getattr(settings.ingestion.metadata_enricher, 'use_llm', False)
 
         # Initialize LLM if enabled
         self.llm = None

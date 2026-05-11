@@ -47,7 +47,10 @@ class ChunkRefiner(BaseTransform):
             prompt_path: Optional path to prompt template file
         """
         self.settings = settings
-        self.use_llm = getattr(settings.ingestion.chunk_refiner, 'use_llm', False)
+        # Safely check for ingestion.chunk_refiner.use_llm configuration
+        self.use_llm = False
+        if hasattr(settings, 'ingestion') and hasattr(settings.ingestion, 'chunk_refiner'):
+            self.use_llm = getattr(settings.ingestion.chunk_refiner, 'use_llm', False)
 
         # Initialize LLM if enabled
         self.llm = None

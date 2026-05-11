@@ -115,9 +115,20 @@ class VectorUpserter:
                 'metadata': record.metadata.copy()
             }
 
-            # Add sparse vector if available
-            if record.sparse_vector is not None:
-                store_record['metadata']['sparse_vector'] = record.sparse_vector
+            # Clean metadata: remove empty lists (some vector stores don't allow them)
+            cleaned_metadata = {}
+            for key, value in store_record['metadata'].items():
+                if isinstance(value, list) and len(value) == 0:
+                    # Skip empty lists
+                    continue
+                if isinstance(value, dict):
+                    # Skip dict values (e.g., sparse_vector should not be in metadata)
+                    continue
+                cleaned_metadata[key] = value
+            store_record['metadata'] = cleaned_metadata
+
+            # Note: sparse_vector is NOT stored in vector store metadata
+            # It's stored separately in BM25 index by the pipeline
 
             upsert_records.append(store_record)
 
