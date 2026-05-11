@@ -1,0 +1,26 @@
+llm:
+  provider: qwen
+  model: qwen3-max
+  api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: your-api-key-here
+  temperature: 0.7
+  max_tokens: 2000
+embedding:
+  provider: openai
+  model: text-embedding-v4
+  api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: your-api-key-here
+  dimensions: 1536
+vector_store:
+  provider: chroma
+  collection_name: rag_collection
+  persist_directory: ./data/chroma
+retrieval:
+  dense_top_k: 10
+  sparse_top_k: 10
+  final_top_k: 5
+reranker:
+  enabled: true
+  provider: cohere
+  model: rerank-multilingual-v2.0
+  top_k: 3
