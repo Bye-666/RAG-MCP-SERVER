@@ -1,4 +1,4 @@
-"""List collections tool implementation."""
+"""列出集合工具实现。"""
 
 import os
 from typing import Dict, Any, List
@@ -6,10 +6,10 @@ from pathlib import Path
 
 
 def get_tool_schema() -> Dict[str, Any]:
-    """Get the tool schema for list_collections."""
+    """获取 list_collections 的工具 schema。"""
     return {
         "name": "list_collections",
-        "description": "List all available document collections in the knowledge base",
+        "description": "列出知识库中所有可用的文档集合",
         "inputSchema": {
             "type": "object",
             "properties": {},
@@ -19,26 +19,26 @@ def get_tool_schema() -> Dict[str, Any]:
 
 
 class ListCollections:
-    """List collections tool handler."""
+    """列出集合工具处理器。"""
 
     def __init__(self, documents_dir: str = "data/documents"):
         """
-        Initialize list collections tool.
+        初始化列出集合工具。
 
         Args:
-            documents_dir: Path to documents directory
+            documents_dir: 文档目录路径
         """
         self.documents_dir = Path(documents_dir)
 
     def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Execute the list_collections tool.
+        执行 list_collections 工具。
 
         Args:
-            arguments: Tool arguments (none required)
+            arguments: 工具参数（无需参数）
 
         Returns:
-            MCP tool result with collection list
+            包含集合列表的 MCP 工具结果
         """
         try:
             collections = self._get_collections()
@@ -47,17 +47,17 @@ class ListCollections:
                 return {
                     "content": [{
                         "type": "text",
-                        "text": "No collections found. Please ingest documents first."
+                        "text": "未找到集合。请先导入文档。"
                     }],
                     "isError": False
                 }
 
-            # Build response text
-            lines = ["# Available Collections", ""]
+            # 构建响应文本
+            lines = ["# 可用集合", ""]
             for collection in collections:
                 lines.append(f"- **{collection['name']}**")
                 if collection.get('document_count'):
-                    lines.append(f"  - Documents: {collection['document_count']}")
+                    lines.append(f"  - 文档数：{collection['document_count']}")
                 lines.append("")
 
             return {
@@ -82,24 +82,24 @@ class ListCollections:
             return {
                 "content": [{
                     "type": "text",
-                    "text": f"Error listing collections: {str(e)}"
+                    "text": f"列出集合时出错：{str(e)}"
                 }],
                 "isError": True
             }
 
     def _get_collections(self) -> List[Dict[str, Any]]:
         """
-        Get list of collections from documents directory.
+        从文档目录获取集合列表。
 
         Returns:
-            List of collection info dictionaries
+            集合信息字典列表
         """
         collections = []
 
         if not self.documents_dir.exists():
             return collections
 
-        # List subdirectories in documents directory
+        # 列出文档目录中的子目录
         for item in self.documents_dir.iterdir():
             if item.is_dir():
                 collection_info = {
@@ -113,13 +113,13 @@ class ListCollections:
 
     def _count_documents(self, collection_path: Path) -> int:
         """
-        Count documents in a collection directory.
+        统计集合目录中的文档数量。
 
         Args:
-            collection_path: Path to collection directory
+            collection_path: 集合目录路径
 
         Returns:
-            Number of documents
+            文档数量
         """
         count = 0
         for item in collection_path.iterdir():
@@ -128,24 +128,24 @@ class ListCollections:
         return count
 
     def _format_collections_json(self, collections: List[Dict[str, Any]]) -> str:
-        """Format collections as JSON string."""
+        """将集合格式化为 JSON 字符串。"""
         import json
         return json.dumps({"collections": collections}, indent=2)
 
 
-# Global instance
+# 全局实例
 _tool_instance: ListCollections = None
 
 
 def list_collections(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """
-    List collections tool entry point.
+    列出集合工具入口点。
 
     Args:
-        arguments: Tool arguments from MCP client
+        arguments: 来自 MCP 客户端的工具参数
 
     Returns:
-        MCP tool result
+        MCP 工具结果
     """
     global _tool_instance
 

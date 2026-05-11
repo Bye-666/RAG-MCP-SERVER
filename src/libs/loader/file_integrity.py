@@ -1,7 +1,7 @@
 """
-File integrity checker for tracking ingestion history.
+用于跟踪摄取历史的文件完整性检查器。
 
-Provides SHA256-based file integrity checking and ingestion status tracking.
+提供基于 SHA256 的文件完整性检查和摄取状态跟踪。
 """
 import hashlib
 import json
@@ -13,34 +13,34 @@ from typing import Optional
 
 
 class FileIntegrityChecker(ABC):
-    """Abstract interface for file integrity checking."""
+    """文件完整性检查的抽象接口。"""
 
     @abstractmethod
     def compute_sha256(self, file_path: str) -> str:
         """
-        Compute SHA256 hash of a file.
+        计算文件的 SHA256 哈希。
 
-        Args:
-            file_path: Path to the file
+        参数:
+            file_path: 文件路径
 
-        Returns:
-            SHA256 hash as hex string (64 characters)
+        返回:
+            SHA256 哈希的十六进制字符串（64 个字符）
 
-        Raises:
-            FileNotFoundError: If file does not exist
+        异常:
+            FileNotFoundError: 如果文件不存在
         """
         pass
 
     @abstractmethod
     def should_skip(self, file_hash: str) -> bool:
         """
-        Check if a file should be skipped based on its hash.
+        根据文件哈希检查是否应跳过文件。
 
-        Args:
-            file_hash: SHA256 hash of the file
+        参数:
+            file_hash: 文件的 SHA256 哈希
 
-        Returns:
-            True if file was successfully processed before, False otherwise
+        返回:
+            如果文件之前已成功处理则为 True，否则为 False
         """
         pass
 
@@ -52,12 +52,12 @@ class FileIntegrityChecker(ABC):
         **metadata
     ) -> None:
         """
-        Mark a file as successfully processed.
+        将文件标记为已成功处理。
 
-        Args:
-            file_hash: SHA256 hash of the file
-            file_path: Path to the file
-            **metadata: Additional metadata (chunk_count, total_tokens, etc.)
+        参数:
+            file_hash: 文件的 SHA256 哈希
+            file_path: 文件路径
+            **metadata: 其他元数据（chunk_count、total_tokens 等）
         """
         pass
 
@@ -68,45 +68,45 @@ class FileIntegrityChecker(ABC):
         error_msg: str
     ) -> None:
         """
-        Mark a file as failed to process.
+        将文件标记为处理失败。
 
-        Args:
-            file_hash: SHA256 hash of the file
-            error_msg: Error message describing the failure
+        参数:
+            file_hash: 文件的 SHA256 哈希
+            error_msg: 描述失败的错误消息
         """
         pass
 
 
 class SQLiteIntegrityChecker(FileIntegrityChecker):
-    """SQLite-based file integrity checker."""
+    """基于 SQLite 的文件完整性检查器。"""
 
     def __init__(self, db_path: Optional[str] = None):
         """
-        Initialize SQLite integrity checker.
+        初始化 SQLite 完整性检查器。
 
-        Args:
-            db_path: Path to SQLite database file.
-                     Defaults to data/db/ingestion_history.db
+        参数:
+            db_path: SQLite 数据库文件路径。
+                     默认为 data/db/ingestion_history.db
         """
         if db_path is None:
             db_path = "data/db/ingestion_history.db"
 
         self.db_path = Path(db_path)
 
-        # Ensure parent directory exists
+        # 确保父目录存在
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Initialize database
+        # 初始化数据库
         self._init_db()
 
     def _init_db(self) -> None:
-        """Initialize database schema and enable WAL mode."""
+        """初始化数据库架构并启用 WAL 模式。"""
         conn = sqlite3.connect(str(self.db_path))
         try:
-            # Enable WAL mode for concurrent writes
+            # 启用 WAL 模式以支持并发写入
             conn.execute("PRAGMA journal_mode=WAL")
 
-            # Create table
+            # 创建表
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS ingestion_history (
                     file_hash TEXT PRIMARY KEY,
@@ -119,7 +119,7 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
                 )
             """)
 
-            # Create index on status for faster queries
+            # 在 status 上创建索引以加快查询
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_status
                 ON ingestion_history(status)
@@ -131,24 +131,24 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
 
     def compute_sha256(self, file_path: str) -> str:
         """
-        Compute SHA256 hash of a file.
+        计算文件的 SHA256 哈希。
 
-        Args:
-            file_path: Path to the file
+        参数:
+            file_path: 文件路径
 
-        Returns:
-            SHA256 hash as hex string (64 characters)
+        返回:
+            SHA256 哈希的十六进制字符串（64 个字符）
 
-        Raises:
-            FileNotFoundError: If file does not exist
+        异常:
+            FileNotFoundError: 如果文件不存在
         """
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(f"文件未找到: {file_path}")
 
         sha256_hash = hashlib.sha256()
 
-        # Read file in chunks to handle large files
+        # 分块读取文件以处理大文件
         with open(path, "rb") as f:
             for chunk in iter(lambda: f.read(8192), b""):
                 sha256_hash.update(chunk)
@@ -157,13 +157,13 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
 
     def should_skip(self, file_hash: str) -> bool:
         """
-        Check if a file should be skipped based on its hash.
+        根据文件哈希检查是否应跳过文件。
 
-        Args:
-            file_hash: SHA256 hash of the file
+        参数:
+            file_hash: 文件的 SHA256 哈希
 
-        Returns:
-            True if file was successfully processed before, False otherwise
+        返回:
+            如果文件之前已成功处理则为 True，否则为 False
         """
         conn = sqlite3.connect(str(self.db_path))
         try:
@@ -188,19 +188,19 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
         **metadata
     ) -> None:
         """
-        Mark a file as successfully processed.
+        将文件标记为已成功处理。
 
-        Args:
-            file_hash: SHA256 hash of the file
-            file_path: Path to the file
-            **metadata: Additional metadata (chunk_count, total_tokens, etc.)
+        参数:
+            file_hash: 文件的 SHA256 哈希
+            file_path: 文件路径
+            **metadata: 其他元数据（chunk_count、total_tokens 等）
         """
         conn = sqlite3.connect(str(self.db_path))
         try:
             now = datetime.now(timezone.utc).isoformat()
             metadata_json = json.dumps(metadata) if metadata else None
 
-            # Use INSERT OR REPLACE to handle updates
+            # 使用 INSERT OR REPLACE 处理更新
             conn.execute("""
                 INSERT OR REPLACE INTO ingestion_history
                 (file_hash, file_path, status, error_msg, metadata, created_at, updated_at)
@@ -219,17 +219,17 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
         error_msg: str
     ) -> None:
         """
-        Mark a file as failed to process.
+        将文件标记为处理失败。
 
-        Args:
-            file_hash: SHA256 hash of the file
-            error_msg: Error message describing the failure
+        参数:
+            file_hash: 文件的 SHA256 哈希
+            error_msg: 描述失败的错误消息
         """
         conn = sqlite3.connect(str(self.db_path))
         try:
             now = datetime.now(timezone.utc).isoformat()
 
-            # Use INSERT OR REPLACE to handle updates
+            # 使用 INSERT OR REPLACE 处理更新
             conn.execute("""
                 INSERT OR REPLACE INTO ingestion_history
                 (file_hash, file_path, status, error_msg, metadata, created_at, updated_at)
@@ -244,13 +244,13 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
 
     def remove_record(self, file_hash: str) -> bool:
         """
-        Remove a record from ingestion history.
+        从摄取历史中删除记录。
 
-        Args:
-            file_hash: SHA256 hash of the file
+        参数:
+            file_hash: 文件的 SHA256 哈希
 
-        Returns:
-            True if record was removed, False if not found
+        返回:
+            如果记录已删除则为 True，如果未找到则为 False
         """
         conn = sqlite3.connect(str(self.db_path))
         try:
@@ -265,13 +265,13 @@ class SQLiteIntegrityChecker(FileIntegrityChecker):
 
     def list_processed(self, status: Optional[str] = None):
         """
-        List all processed files.
+        列出所有已处理的文件。
 
-        Args:
-            status: Optional status filter ('success' or 'failed')
+        参数:
+            status: 可选的状态过滤器（'success' 或 'failed'）
 
-        Returns:
-            List of dicts with file_hash, file_path, status, metadata, created_at, updated_at
+        返回:
+            包含 file_hash、file_path、status、metadata、created_at、updated_at 的字典列表
         """
         conn = sqlite3.connect(str(self.db_path))
         try:

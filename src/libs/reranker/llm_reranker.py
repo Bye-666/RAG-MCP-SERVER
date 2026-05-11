@@ -7,16 +7,16 @@ from ...core.trace import TraceContext
 
 
 class LLMReranker(BaseReranker):
-    """LLM-based reranker using structured output"""
+    """基于 LLM 的重排序器，使用结构化输出"""
 
     def __init__(self, llm, prompt_path: Optional[str] = None, prompt_text: Optional[str] = None):
         """
-        Initialize LLM reranker
+        初始化 LLM 重排序器
 
-        Args:
-            llm: LLM instance with chat() method
-            prompt_path: Path to prompt template file (default: config/prompts/rerank.txt)
-            prompt_text: Optional prompt text override (for testing)
+        参数:
+            llm: 具有 chat() 方法的 LLM 实例
+            prompt_path: 提示模板文件路径（默认: config/prompts/rerank.txt）
+            prompt_text: 可选的提示文本覆盖（用于测试）
         """
         self.llm = llm
 
@@ -28,7 +28,7 @@ class LLMReranker(BaseReranker):
 
             prompt_file = Path(prompt_path)
             if not prompt_file.exists():
-                raise FileNotFoundError(f"Rerank prompt file not found: {prompt_path}")
+                raise FileNotFoundError(f"重排序提示文件未找到: {prompt_path}")
 
             self.prompt_template = prompt_file.read_text(encoding='utf-8')
 
@@ -39,77 +39,77 @@ class LLMReranker(BaseReranker):
         trace: Optional[TraceContext] = None
     ) -> List[Dict[str, Any]]:
         """
-        Rerank candidates using LLM
+        使用 LLM 对候选项进行重排序
 
-        Args:
-            query: User query
-            candidates: List of candidate dicts (must have 'id' and 'text' fields)
-            trace: Optional trace context
+        参数:
+            query: 用户查询
+            candidates: 候选项字典列表（必须有 'id' 和 'text' 字段）
+            trace: 可选的跟踪上下文
 
-        Returns:
-            Reranked list of candidates with updated scores
+        返回:
+            带有更新分数的重排序候选项列表
 
-        Raises:
-            ValueError: If candidates format is invalid or LLM output doesn't match schema
-            RuntimeError: If LLM call fails (allows fallback to original ranking)
+        异常:
+            ValueError: 如果候选项格式无效或 LLM 输出不匹配架构
+            RuntimeError: 如果 LLM 调用失败（允许回退到原始排序）
         """
         if not candidates:
             return []
 
         if trace:
-            trace.log("llm_reranker", f"Reranking {len(candidates)} candidates")
+            trace.log("llm_reranker", f"重排序 {len(candidates)} 个候选项")
 
-        # Validate candidates have required fields
+        # 验证候选项具有必需字段
         for i, cand in enumerate(candidates):
             if 'id' not in cand:
-                raise ValueError(f"Candidate {i} missing 'id' field")
+                raise ValueError(f"候选项 {i} 缺少 'id' 字段")
             if 'text' not in cand:
-                raise ValueError(f"Candidate {i} missing 'text' field")
+                raise ValueError(f"候选项 {i} 缺少 'text' 字段")
 
-        # Build candidate list for prompt
+        # 为提示构建候选项列表
         candidate_lines = []
         for cand in candidates:
             candidate_lines.append(f"ID: {cand['id']}\nText: {cand['text']}\n")
 
         candidates_text = "\n".join(candidate_lines)
 
-        # Format prompt
+        # 格式化提示
         prompt = self.prompt_template.format(
             query=query,
             candidates=candidates_text
         )
 
-        # Call LLM
+        # 调用 LLM
         try:
             messages = [{"role": "user", "content": prompt}]
             response = self.llm.chat(messages)
 
             if trace:
-                trace.log("llm_reranker", f"LLM response: {response[:200]}...")
+                trace.log("llm_reranker", f"LLM 响应: {response[:200]}...")
 
         except Exception as e:
-            raise RuntimeError(f"LLM reranking failed: {str(e)}") from e
+            raise RuntimeError(f"LLM 重排序失败: {str(e)}") from e
 
-        # Parse structured output
+        # 解析结构化输出
         try:
-            # Extract JSON from response (handle markdown code blocks)
+            # 从响应中提取 JSON（处理 markdown 代码块）
             response_clean = response.strip()
             if response_clean.startswith("```"):
-                # Remove markdown code block markers
+                # 移除 markdown 代码块标记
                 lines = response_clean.split("\n")
                 response_clean = "\n".join(lines[1:-1]) if len(lines) > 2 else response_clean
 
             result = json.loads(response_clean)
 
             if "ranked_ids" not in result:
-                raise ValueError("LLM output missing 'ranked_ids' field")
+                raise ValueError("LLM 输出缺少 'ranked_ids' 字段")
 
             ranked_ids = result["ranked_ids"]
 
             if not isinstance(ranked_ids, list):
-                raise ValueError(f"'ranked_ids' must be a list, got {type(ranked_ids).__name__}")
+                raise ValueError(f"'ranked_ids' 必须是列表，得到 {type(ranked_ids).__name__}")
 
-            # Validate all IDs are present
+            # 验证所有 ID 都存在
             candidate_ids = {cand['id'] for cand in candidates}
             ranked_id_set = set(ranked_ids)
 
@@ -118,26 +118,26 @@ class LLMReranker(BaseReranker):
                 extra = ranked_id_set - candidate_ids
                 error_parts = []
                 if missing:
-                    error_parts.append(f"missing IDs: {missing}")
+                    error_parts.append(f"缺少的 ID: {missing}")
                 if extra:
-                    error_parts.append(f"extra IDs: {extra}")
-                raise ValueError(f"Ranked IDs don't match candidates ({', '.join(error_parts)})")
+                    error_parts.append(f"额外的 ID: {extra}")
+                raise ValueError(f"排序的 ID 与候选项不匹配 ({', '.join(error_parts)})")
 
         except json.JSONDecodeError as e:
-            raise ValueError(f"LLM output is not valid JSON: {str(e)}") from e
+            raise ValueError(f"LLM 输出不是有效的 JSON: {str(e)}") from e
         except (KeyError, ValueError) as e:
-            raise ValueError(f"LLM output doesn't match expected schema: {str(e)}") from e
+            raise ValueError(f"LLM 输出不匹配预期架构: {str(e)}") from e
 
-        # Build reranked result
+        # 构建重排序结果
         id_to_candidate = {cand['id']: cand for cand in candidates}
         reranked = []
 
         for rank, cand_id in enumerate(ranked_ids):
             cand = id_to_candidate[cand_id].copy()
-            cand['rerank_score'] = 1.0 / (rank + 1)  # Reciprocal rank as score
+            cand['rerank_score'] = 1.0 / (rank + 1)  # 倒数排名作为分数
             reranked.append(cand)
 
         if trace:
-            trace.log("llm_reranker", f"Reranked to: {[c['id'] for c in reranked]}")
+            trace.log("llm_reranker", f"重排序为: {[c['id'] for c in reranked]}")
 
         return reranked

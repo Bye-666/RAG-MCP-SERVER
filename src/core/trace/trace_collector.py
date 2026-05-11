@@ -1,7 +1,7 @@
 """
-TraceCollector: Collects and persists trace data.
+TraceCollector: 收集和持久化追踪数据。
 
-Responsible for collecting finished traces and triggering persistence.
+负责收集已完成的追踪并触发持久化。
 """
 
 from typing import Optional
@@ -11,42 +11,42 @@ from src.observability.logger import write_trace
 
 class TraceCollector:
     """
-    Collects trace data and triggers persistence to JSON Lines.
+    收集追踪数据并触发持久化到 JSON Lines。
     """
 
     def __init__(self, log_dir: str = "logs"):
         """
-        Initialize trace collector.
+        初始化追踪收集器。
 
-        Args:
-            log_dir: Directory to write trace logs (default: "logs")
+        参数:
+            log_dir: 写入追踪日志的目录（默认："logs"）
         """
         self.collected_traces = []
         self.log_dir = log_dir
 
     def collect(self, trace: TraceContext) -> None:
         """
-        Collect a trace and persist to logs/traces.jsonl.
+        收集追踪并持久化到 logs/traces.jsonl。
 
-        Args:
-            trace: TraceContext instance to collect
+        参数:
+            trace: 要收集的 TraceContext 实例
         """
-        # Store trace data
+        # 存储追踪数据
         trace_dict = trace.to_dict()
         self.collected_traces.append(trace_dict)
 
-        # Persist to JSON Lines file
+        # 持久化到 JSON Lines 文件
         write_trace(trace_dict, self.log_dir)
 
     def get_traces(self):
         """
-        Get all collected traces.
+        获取所有收集的追踪。
 
-        Returns:
-            List of trace dictionaries
+        返回:
+            追踪字典列表
         """
         return self.collected_traces
 
     def clear(self):
-        """Clear all collected traces."""
+        """清除所有收集的追踪。"""
         self.collected_traces.clear()

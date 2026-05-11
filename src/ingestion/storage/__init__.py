@@ -1,7 +1,7 @@
-"""Storage module for ingestion pipeline
+"""数据摄取管道的存储模块
 
-This module handles persistent storage of indexed data including
-BM25 indices, vector stores, and image files.
+该模块处理索引数据的持久化存储，包括
+BM25 索引、向量存储和图像文件。
 """
 
 from .bm25_indexer import BM25Indexer

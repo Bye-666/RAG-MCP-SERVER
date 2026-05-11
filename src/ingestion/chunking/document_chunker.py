@@ -1,11 +1,11 @@
 """
-DocumentChunker: Adapter layer between libs.splitter and core.types.
+DocumentChunker: libs.splitter 和 core.types 之间的适配器层。
 
-Converts Document objects to List[Chunk] with business logic:
-- Chunk ID generation
-- Metadata inheritance
-- Image reference distribution
-- Source reference tracking
+将 Document 对象转换为 List[Chunk]，包含业务逻辑：
+- 块 ID 生成
+- 元数据继承
+- 图像引用分发
+- 源引用跟踪
 """
 import hashlib
 import re
@@ -17,41 +17,41 @@ from src.libs.splitter.splitter_factory import SplitterFactory
 
 class DocumentChunker:
     """
-    Adapter that converts Document objects to Chunk objects using libs.splitter.
+    使用 libs.splitter 将 Document 对象转换为 Chunk 对象的适配器。
 
-    Responsibilities:
-    1. Generate unique and deterministic Chunk IDs
-    2. Inherit metadata from parent Document
-    3. Add chunk_index for ordering
-    4. Establish source_ref to parent Document
-    5. Distribute image references to chunks that reference them
-    6. Convert List[str] from splitter to List[Chunk]
+    职责：
+    1. 生成唯一且确定性的块 ID
+    2. 从父文档继承元数据
+    3. 添加 chunk_index 用于排序
+    4. 建立到父文档的 source_ref
+    5. 将图像引用分发到引用它们的块
+    6. 将分割器的 List[str] 转换为 List[Chunk]
     """
 
     def __init__(self, settings):
         """
-        Initialize DocumentChunker with settings.
+        使用设置初始化 DocumentChunker。
 
         Args:
-            settings: Settings object with splitter configuration
+            settings: 包含分割器配置的设置对象
         """
         self.settings = settings
         self.splitter = SplitterFactory.create(settings.splitter)
 
     def split_document(self, document: Document) -> List[Chunk]:
         """
-        Split a Document into a list of Chunks.
+        将文档分割为块列表。
 
         Args:
-            document: Document object to split
+            document: 要分割的文档对象
 
         Returns:
-            List of Chunk objects with metadata and references
+            包含元数据和引用的块对象列表
         """
-        # Use splitter to get text chunks
+        # 使用分割器获取文本块
         text_chunks = self.splitter.split_text(document.text)
 
-        # Convert to Chunk objects with business logic
+        # 使用业务逻辑转换为 Chunk 对象
         chunks = []
         for idx, text in enumerate(text_chunks):
             chunk_id = self._generate_chunk_id(document.id, idx, text)
@@ -69,89 +69,89 @@ class DocumentChunker:
 
     def _generate_chunk_id(self, doc_id: str, index: int, text: str) -> str:
         """
-        Generate unique and deterministic chunk ID.
+        生成唯一且确定性的块 ID。
 
-        Format: {doc_id}_{index:04d}_{hash_8chars}
+        格式: {doc_id}_{index:04d}_{hash_8chars}
 
         Args:
-            doc_id: Parent document ID
-            index: Chunk index in document
-            text: Chunk text content
+            doc_id: 父文档 ID
+            index: 文档中的块索引
+            text: 块文本内容
 
         Returns:
-            Chunk ID string
+            块 ID 字符串
         """
-        # Compute hash of text for uniqueness
+        # 计算文本哈希以确保唯一性
         text_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()[:8]
         return f"{doc_id}_{index:04d}_{text_hash}"
 
     def _inherit_metadata(self, document: Document, chunk_index: int, chunk_text: str) -> dict:
         """
-        Inherit metadata from document and add chunk-specific fields.
+        从文档继承元数据并添加块特定字段。
 
-        Also distributes image references to chunks that contain image placeholders.
+        同时将图像引用分发到包含图像占位符的块。
 
         Args:
-            document: Parent document
-            chunk_index: Index of this chunk
-            chunk_text: Text content of this chunk
+            document: 父文档
+            chunk_index: 此块的索引
+            chunk_text: 此块的文本内容
 
         Returns:
-            Metadata dictionary for chunk
+            块的元数据字典
         """
-        # Copy all document metadata
+        # 复制所有文档元数据
         metadata = document.metadata.copy()
 
-        # Add chunk_index
+        # 添加 chunk_index
         metadata["chunk_index"] = chunk_index
 
-        # Distribute image references
+        # 分发图像引用
         self._distribute_images(metadata, chunk_text)
 
         return metadata
 
     def _distribute_images(self, metadata: dict, chunk_text: str) -> None:
         """
-        Distribute image references to chunk metadata based on placeholders.
+        根据占位符将图像引用分发到块元数据。
 
-        Scans chunk_text for [IMAGE: {id}] placeholders and extracts matching
-        images from document-level metadata["images"].
+        扫描 chunk_text 中的 [IMAGE: {id}] 占位符，并从文档级
+        metadata["images"] 中提取匹配的图像。
 
-        Modifies metadata in-place:
-        - Adds metadata["images"]: list of ImageRef dicts for this chunk
-        - Adds metadata["image_refs"]: list of image_id strings
-        - Removes document-level "images" if no placeholders found
+        就地修改元数据：
+        - 添加 metadata["images"]: 此块的 ImageRef 字典列表
+        - 添加 metadata["image_refs"]: image_id 字符串列表
+        - 如果未找到占位符，则删除文档级 "images"
 
         Args:
-            metadata: Chunk metadata dict (will be modified in-place)
-            chunk_text: Text content to scan for placeholders
+            metadata: 块元数据字典（将就地修改）
+            chunk_text: 要扫描占位符的文本内容
         """
-        # Extract image IDs from placeholders in chunk text
+        # 从块文本中的占位符提取图像 ID
         pattern = r'\[IMAGE:\s*([^\]]+)\]'
         matches = re.findall(pattern, chunk_text)
         image_ids = [m.strip() for m in matches]
 
         if not image_ids:
-            # No image placeholders in this chunk, remove images field
+            # 此块中没有图像占位符，删除 images 字段
             metadata.pop("images", None)
             return
 
-        # Get document-level images
+        # 获取文档级图像
         doc_images = metadata.get("images", [])
         if not doc_images:
-            # Document has no images metadata
+            # 文档没有图像元数据
             return
 
-        # Filter images that are referenced in this chunk
+        # 过滤此块中引用的图像
         chunk_images = []
         for img in doc_images:
             if img.get("image_id") in image_ids:
                 chunk_images.append(img)
 
-        # Update metadata with chunk-specific images
+        # 使用块特定图像更新元数据
         if chunk_images:
             metadata["images"] = chunk_images
             metadata["image_refs"] = image_ids
         else:
-            # No matching images found, remove field
+            # 未找到匹配的图像，删除字段
             metadata.pop("images", None)

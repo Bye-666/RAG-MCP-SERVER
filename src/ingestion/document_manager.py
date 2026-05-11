@@ -1,7 +1,7 @@
 """
-Document Manager for cross-storage document lifecycle management.
+跨存储文档生命周期管理的文档管理器。
 
-Coordinates operations across ChromaStore, BM25Indexer, ImageStorage, and FileIntegrity.
+协调 ChromaStore、BM25Indexer、ImageStorage 和 FileIntegrity 之间的操作。
 """
 
 from typing import List, Dict, Any, Optional
@@ -15,7 +15,7 @@ from src.libs.loader.file_integrity import FileIntegrityChecker
 
 @dataclass
 class DocumentInfo:
-    """Information about a document"""
+    """关于文档的信息"""
     source_path: str
     file_hash: str
     chunk_count: int
@@ -27,7 +27,7 @@ class DocumentInfo:
 
 @dataclass
 class DocumentDetail:
-    """Detailed information about a document"""
+    """关于文档的详细信息"""
     source_path: str
     file_hash: str
     chunks: List[Dict[str, Any]]
@@ -37,7 +37,7 @@ class DocumentDetail:
 
 @dataclass
 class DeleteResult:
-    """Result of document deletion"""
+    """文档删除结果"""
     success: bool
     chunks_deleted: int
     images_deleted: int
@@ -48,7 +48,7 @@ class DeleteResult:
 
 @dataclass
 class CollectionStats:
-    """Statistics for a collection"""
+    """集合的统计信息"""
     total_documents: int
     total_chunks: int
     total_images: int
@@ -57,7 +57,7 @@ class CollectionStats:
 
 
 class DocumentManager:
-    """Manages document lifecycle across multiple storage systems"""
+    """跨多个存储系统管理文档生命周期"""
 
     def __init__(
         self,
@@ -67,13 +67,13 @@ class DocumentManager:
         file_integrity: FileIntegrityChecker
     ):
         """
-        Initialize document manager.
+        初始化文档管理器。
 
         Args:
-            chroma_store: Vector store instance
-            bm25_indexer: BM25 index instance
-            image_storage: Image storage instance
-            file_integrity: File integrity checker instance
+            chroma_store: 向量存储实例
+            bm25_indexer: BM25 索引实例
+            image_storage: 图像存储实例
+            file_integrity: 文件完整性检查器实例
         """
         self.chroma_store = chroma_store
         self.bm25_indexer = bm25_indexer
@@ -82,15 +82,15 @@ class DocumentManager:
 
     def list_documents(self, collection: Optional[str] = None) -> List[DocumentInfo]:
         """
-        List all processed documents.
+        列出所有已处理的文档。
 
         Args:
-            collection: Optional collection filter (not used in current implementation)
+            collection: 可选的集合过滤器（当前实现中未使用）
 
         Returns:
-            List of DocumentInfo objects
+            DocumentInfo 对象列表
         """
-        # Get all successfully processed files from integrity checker
+        # 从完整性检查器获取所有成功处理的文件
         processed_files = self.file_integrity.list_processed(status="success")
 
         documents = []
@@ -110,29 +110,29 @@ class DocumentManager:
 
     def get_document_detail(self, source_path: str) -> Optional[DocumentDetail]:
         """
-        Get detailed information about a document.
+        获取文档的详细信息。
 
         Args:
-            source_path: Source path of the document
+            source_path: 文档的源路径
 
         Returns:
-            DocumentDetail object or None if not found
+            DocumentDetail 对象，如果未找到则返回 None
         """
-        # Query chunks from vector store by source_path
+        # 通过 source_path 从向量存储查询块
         chunks = self.chroma_store.get_by_metadata({"source_path": source_path})
 
         if not chunks:
             return None
 
-        # Get images for this document
+        # 获取此文档的图像
         images = []
         try:
             doc_images = self.image_storage.list_images(source_path)
             images = doc_images
         except Exception:
-            pass  # Images might not exist
+            pass  # 图像可能不存在
 
-        # Extract metadata from first chunk
+        # 从第一个块提取元数据
         metadata = chunks[0].get("metadata", {}) if chunks else {}
 
         return DocumentDetail(
@@ -145,14 +145,14 @@ class DocumentManager:
 
     def delete_document(self, source_path: str, collection: Optional[str] = None) -> DeleteResult:
         """
-        Delete a document from all storage systems.
+        从所有存储系统中删除文档。
 
         Args:
-            source_path: Source path of the document
-            collection: Optional collection name (not used in current implementation)
+            source_path: 文档的源路径
+            collection: 可选的集合名称（当前实现中未使用）
 
         Returns:
-            DeleteResult with deletion statistics
+            包含删除统计信息的 DeleteResult
         """
         result = DeleteResult(
             success=False,
@@ -163,28 +163,28 @@ class DocumentManager:
         )
 
         try:
-            # 1. Get all chunks for this document from vector store
+            # 1. 从向量存储获取此文档的所有块
             chunks = self.chroma_store.get_by_metadata({"source_path": source_path})
 
-            # 2. If chunks exist, delete from vector store and BM25
+            # 2. 如果块存在，从向量存储和 BM25 中删除
             if chunks:
                 chunk_ids = [chunk["id"] for chunk in chunks]
 
-                # Delete from vector store
+                # 从向量存储删除
                 chunks_deleted = self.chroma_store.delete_by_metadata({"source_path": source_path})
                 result.chunks_deleted = chunks_deleted
 
-                # Delete from BM25 index
+                # 从 BM25 索引删除
                 bm25_deleted = self.bm25_indexer.remove_document(chunk_ids)
                 result.bm25_postings_deleted = bm25_deleted
 
-                # Save updated BM25 index
+                # 保存更新的 BM25 索引
                 self.bm25_indexer.save()
 
-                # Get file_hash from metadata for integrity checker
+                # 从元数据获取 file_hash 用于完整性检查器
                 file_hash = chunks[0].get("metadata", {}).get("file_hash")
             else:
-                # No chunks found, try to get file_hash from integrity checker
+                # 未找到块，尝试从完整性检查器获取 file_hash
                 file_hash = None
                 processed_files = self.file_integrity.list_processed()
                 for file_record in processed_files:
@@ -192,25 +192,25 @@ class DocumentManager:
                         file_hash = file_record.get("file_hash")
                         break
 
-            # 3. Delete images
+            # 3. 删除图像
             try:
                 images_deleted = self.image_storage.delete_images(source_path)
                 result.images_deleted = images_deleted
             except Exception:
-                pass  # Images might not exist
+                pass  # 图像可能不存在
 
-            # 4. Remove from integrity checker
+            # 4. 从完整性检查器中删除
             if file_hash:
                 integrity_deleted = self.file_integrity.remove_record(file_hash)
                 result.integrity_record_deleted = integrity_deleted
 
-            # Consider success if we deleted anything or removed integrity record
+            # 如果我们删除了任何内容或删除了完整性记录，则认为成功
             result.success = (result.chunks_deleted > 0 or
                             result.images_deleted > 0 or
                             result.integrity_record_deleted)
 
             if not result.success and not chunks:
-                result.error = f"No data found for source_path: {source_path}"
+                result.error = f"未找到 source_path 的数据: {source_path}"
 
             return result
 
@@ -220,24 +220,24 @@ class DocumentManager:
 
     def get_collection_stats(self, collection: Optional[str] = None) -> CollectionStats:
         """
-        Get statistics for a collection.
+        获取集合的统计信息。
 
         Args:
-            collection: Optional collection name (not used in current implementation)
+            collection: 可选的集合名称（当前实现中未使用）
 
         Returns:
-            CollectionStats object
+            CollectionStats 对象
         """
-        # Get document count from integrity checker
+        # 从完整性检查器获取文档计数
         documents = self.list_documents(collection)
         total_documents = len(documents)
         total_chunks = sum(doc.chunk_count for doc in documents)
         total_images = sum(doc.image_count for doc in documents)
 
-        # Get vector store count
+        # 获取向量存储计数
         vector_store_count = self.chroma_store.count()
 
-        # Get BM25 stats
+        # 获取 BM25 统计信息
         bm25_stats = self.bm25_indexer.get_stats()
 
         return CollectionStats(

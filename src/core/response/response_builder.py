@@ -1,4 +1,4 @@
-"""MCP response builder for query results."""
+"""查询结果的 MCP 响应构建器。"""
 
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
@@ -7,47 +7,47 @@ from .citation_generator import CitationGenerator, Citation
 
 @dataclass
 class MCPResponse:
-    """MCP tool response format."""
+    """MCP 工具响应格式。"""
     content: List[Dict[str, Any]]
     isError: bool = False
 
 
 class ResponseBuilder:
-    """Builds MCP-formatted responses from retrieval results."""
+    """从检索结果构建 MCP 格式的响应。"""
 
     def __init__(self, citation_generator: Optional[CitationGenerator] = None):
         """
-        Initialize response builder.
+        初始化响应构建器。
 
-        Args:
-            citation_generator: Citation generator instance (creates default if None)
+        参数:
+            citation_generator: 引用生成器实例（如果为 None 则创建默认实例）
         """
         self.citation_generator = citation_generator or CitationGenerator()
 
     def build(self, retrieval_results: List[Dict[str, Any]], query: str) -> MCPResponse:
         """
-        Build MCP response from retrieval results.
+        从检索结果构建 MCP 响应。
 
-        Args:
-            retrieval_results: List of retrieval results
-            query: Original query text
+        参数:
+            retrieval_results: 检索结果列表
+            query: 原始查询文本
 
-        Returns:
-            MCPResponse with markdown text and structured citations
+        返回:
+            包含 markdown 文本和结构化引用的 MCPResponse
         """
         if not retrieval_results:
             return self._build_empty_response(query)
 
-        # Generate citations
+        # 生成引用
         citations = self.citation_generator.generate(retrieval_results)
 
-        # Build markdown text with citation markers
+        # 构建带引用标记的 markdown 文本
         markdown_text = self._build_markdown(query, retrieval_results, citations)
 
-        # Build structured citations
+        # 构建结构化引用
         structured_citations = self._build_structured_citations(citations)
 
-        # Construct MCP response
+        # 构造 MCP 响应
         content = [
             {
                 "type": "text",
@@ -66,13 +66,13 @@ class ResponseBuilder:
         return MCPResponse(content=content, isError=False)
 
     def _build_empty_response(self, query: str) -> MCPResponse:
-        """Build response for empty results."""
+        """为空结果构建响应。"""
         message = (
-            f"No relevant documents found for query: \"{query}\"\n\n"
-            "Suggestions:\n"
-            "- Try different keywords or rephrase your query\n"
-            "- Check if documents have been ingested using list_collections tool\n"
-            "- Verify the collection filter if specified"
+            f"未找到与查询相关的文档: \"{query}\"\n\n"
+            "建议:\n"
+            "- 尝试不同的关键词或重新表述您的查询\n"
+            "- 使用 list_collections 工具检查文档是否已被摄取\n"
+            "- 如果指定了集合过滤器，请验证其正确性"
         )
 
         content = [{"type": "text", "text": message}]
@@ -84,18 +84,18 @@ class ResponseBuilder:
         results: List[Dict[str, Any]],
         citations: List[Citation]
     ) -> str:
-        """Build markdown text with citation markers."""
+        """构建带引用标记的 markdown 文本。"""
         lines = [
-            f"# Query Results: {query}",
+            f"# 查询结果: {query}",
             "",
-            f"Found {len(results)} relevant documents:",
+            f"找到 {len(results)} 个相关文档:",
             ""
         ]
 
         for idx, citation in enumerate(citations, start=1):
             lines.append(f"## [{idx}] {citation.title}")
-            lines.append(f"**Source:** {citation.source} (Page {citation.page})")
-            lines.append(f"**Relevance Score:** {citation.score:.4f}")
+            lines.append(f"**来源:** {citation.source} (第 {citation.page} 页)")
+            lines.append(f"**相关性分数:** {citation.score:.4f}")
             lines.append("")
             lines.append(citation.snippet)
             lines.append("")
@@ -103,7 +103,7 @@ class ResponseBuilder:
         return "\n".join(lines)
 
     def _build_structured_citations(self, citations: List[Citation]) -> str:
-        """Build structured citations as JSON string."""
+        """将结构化引用构建为 JSON 字符串。"""
         import json
 
         citations_data = {

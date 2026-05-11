@@ -1,11 +1,11 @@
 """
-ImageCaptioner: Transform that generates captions for images in chunks.
+ImageCaptioner: 为分块中的图像生成标题的转换器。
 
-Provides two modes:
-1. Enabled mode: Uses Vision LLM to generate captions for images
-2. Disabled/fallback mode: Marks chunks with unprocessed images
+提供两种模式：
+1. 启用模式：使用 Vision LLM 为图像生成标题
+2. 禁用/回退模式：标记包含未处理图像的分块
 
-Falls back gracefully when Vision LLM is unavailable or fails.
+当 Vision LLM 不可用或失败时优雅地回退。
 """
 
 import logging
@@ -22,13 +22,13 @@ logger = logging.getLogger(__name__)
 
 class ImageCaptioner(BaseTransform):
     """
-    Generates captions for images referenced in chunks.
+    为分块中引用的图像生成标题。
 
-    Two-stage processing:
-    1. Vision LLM mode (if enabled and available)
-    2. Fallback mode (marks unprocessed images)
+    两阶段处理：
+    1. Vision LLM 模式（如果启用且可用）
+    2. 回退模式（标记未处理的图像）
 
-    Graceful degradation: Vision LLM failures don't block ingestion.
+    优雅降级：Vision LLM 失败不会阻塞摄取。
     """
 
     def __init__(
@@ -38,20 +38,20 @@ class ImageCaptioner(BaseTransform):
         prompt_path: Optional[str] = None
     ):
         """
-        Initialize ImageCaptioner.
+        初始化 ImageCaptioner。
 
         Args:
-            settings: Settings object with vision_llm configuration
-            vision_llm: Optional Vision LLM instance (if None, will create from settings)
-            prompt_path: Optional path to prompt template file
+            settings: 包含 vision_llm 配置的设置对象
+            vision_llm: 可选的 Vision LLM 实例（如果为 None，将从设置创建）
+            prompt_path: 可选的提示模板文件路径
         """
         self.settings = settings
-        # Safely check for ingestion.image_captioner.use_vision configuration
+        # 安全检查 ingestion.image_captioner.use_vision 配置
         self.use_vision = False
         if hasattr(settings, 'ingestion') and hasattr(settings.ingestion, 'image_captioner'):
             self.use_vision = getattr(settings.ingestion.image_captioner, 'use_vision', False)
 
-        # Initialize Vision LLM if enabled
+        # 如果启用，初始化 Vision LLM
         self.vision_llm = None
         if self.use_vision:
             if vision_llm is not None:
@@ -60,21 +60,21 @@ class ImageCaptioner(BaseTransform):
                 try:
                     self.vision_llm = LLMFactory.create_vision_llm(settings)
                 except Exception as e:
-                    logger.warning(f"Failed to initialize Vision LLM for image captioning: {e}")
+                    logger.warning(f"初始化图像标题生成的 Vision LLM 失败: {e}")
                     self.use_vision = False
 
-        # Load prompt template
+        # 加载提示模板
         self.prompt_template = self._load_prompt(prompt_path)
 
     def _load_prompt(self, prompt_path: Optional[str] = None) -> str:
         """
-        Load prompt template from file.
+        从文件加载提示模板。
 
         Args:
-            prompt_path: Optional custom prompt path
+            prompt_path: 可选的自定义提示路径
 
         Returns:
-            Prompt template string
+            提示模板字符串
         """
         if prompt_path is None:
             prompt_path = "config/prompts/image_captioning.txt"
@@ -84,21 +84,21 @@ class ImageCaptioner(BaseTransform):
             if path.exists():
                 return path.read_text(encoding='utf-8')
         except Exception as e:
-            logger.warning(f"Failed to load prompt from {prompt_path}: {e}")
+            logger.warning(f"从 {prompt_path} 加载提示失败: {e}")
 
-        # Fallback prompt
-        return "Describe this image in detail. Focus on the main content, objects, text, and any important visual elements."
+        # 回退提示
+        return "详细描述这张图像。重点关注主要内容、对象、文本和任何重要的视觉元素。"
 
     def transform(self, chunks: List[Chunk], trace: Optional[TraceContext] = None) -> List[Chunk]:
         """
-        Transform chunks by generating captions for images.
+        通过为图像生成标题来转换分块。
 
         Args:
-            chunks: List of chunks to process
-            trace: Optional trace context
+            chunks: 要处理的分块列表
+            trace: 可选的追踪上下文
 
         Returns:
-            List of chunks with image captions (if applicable)
+            带有图像标题的分块列表（如果适用）
         """
         stage = None
         if trace:
@@ -113,15 +113,15 @@ class ImageCaptioner(BaseTransform):
                 processed_chunk = self._process_chunk(chunk, trace)
                 processed_chunks.append(processed_chunk)
 
-                # Track statistics
+                # 跟踪统计信息
                 if "image_captions" in processed_chunk.metadata:
                     images_processed += len(processed_chunk.metadata["image_captions"])
                 if processed_chunk.metadata.get("has_unprocessed_images"):
                     images_failed += 1
 
             except Exception as e:
-                logger.error(f"Failed to process chunk {chunk.id}: {e}")
-                # On error, keep original chunk but mark as unprocessed
+                logger.error(f"处理分块 {chunk.id} 失败: {e}")
+                # 出错时，保留原始分块但标记为未处理
                 error_chunk = Chunk(
                     id=chunk.id,
                     text=chunk.text,
@@ -145,22 +145,22 @@ class ImageCaptioner(BaseTransform):
 
     def _process_chunk(self, chunk: Chunk, trace: Optional[TraceContext] = None) -> Chunk:
         """
-        Process a single chunk to generate image captions.
+        处理单个分块以生成图像标题。
 
         Args:
-            chunk: Chunk to process
-            trace: Optional trace context
+            chunk: 要处理的分块
+            trace: 可选的追踪上下文
 
         Returns:
-            Processed chunk with captions or fallback markers
+            带有标题或回退标记的处理后分块
         """
-        # Check if chunk has image references
+        # 检查分块是否有图像引用
         image_refs = chunk.metadata.get("image_refs", [])
         if not image_refs:
-            # No images, return as-is
+            # 没有图像，原样返回
             return chunk
 
-        # Try to generate captions if Vision LLM is available
+        # 如果 Vision LLM 可用，尝试生成标题
         captions = {}
         unprocessed = []
 
@@ -172,10 +172,10 @@ class ImageCaptioner(BaseTransform):
                 else:
                     unprocessed.append(image_ref)
         else:
-            # Vision disabled, mark all as unprocessed
+            # Vision 禁用，标记所有为未处理
             unprocessed = image_refs
 
-        # Build updated metadata
+        # 构建更新的元数据
         updated_metadata = {**chunk.metadata}
 
         if captions:
@@ -186,7 +186,7 @@ class ImageCaptioner(BaseTransform):
             updated_metadata["has_unprocessed_images"] = True
             updated_metadata["unprocessed_image_refs"] = unprocessed
 
-        # Create updated chunk
+        # 创建更新的分块
         return Chunk(
             id=chunk.id,
             text=chunk.text,
@@ -203,32 +203,32 @@ class ImageCaptioner(BaseTransform):
         trace: Optional[TraceContext] = None
     ) -> Optional[str]:
         """
-        Generate caption for a single image.
+        为单个图像生成标题。
 
         Args:
-            image_ref: Image reference ID
-            chunk: Parent chunk (for context)
-            trace: Optional trace context
+            image_ref: 图像引用 ID
+            chunk: 父分块（用于上下文）
+            trace: 可选的追踪上下文
 
         Returns:
-            Caption string, or None on failure
+            标题字符串，失败时返回 None
         """
         if not self.vision_llm:
             return None
 
         try:
-            # Get image path from metadata
+            # 从元数据获取图像路径
             image_path = self._resolve_image_path(image_ref, chunk)
             if not image_path:
-                logger.warning(f"Could not resolve image path for {image_ref}")
+                logger.warning(f"无法解析 {image_ref} 的图像路径")
                 return None
 
-            # Check if image file exists
+            # 检查图像文件是否存在
             if not Path(image_path).exists():
-                logger.warning(f"Image file not found: {image_path}")
+                logger.warning(f"图像文件未找到: {image_path}")
                 return None
 
-            # Generate caption using Vision LLM
+            # 使用 Vision LLM 生成标题
             response = self.vision_llm.chat_with_image(
                 text=self.prompt_template,
                 image=image_path,
@@ -238,29 +238,29 @@ class ImageCaptioner(BaseTransform):
             return response.content.strip()
 
         except Exception as e:
-            logger.warning(f"Failed to generate caption for {image_ref}: {e}")
+            logger.warning(f"为 {image_ref} 生成标题失败: {e}")
             return None
 
     def _resolve_image_path(self, image_ref: str, chunk: Chunk) -> Optional[str]:
         """
-        Resolve image reference to file path.
+        将图像引用解析为文件路径。
 
         Args:
-            image_ref: Image reference ID
-            chunk: Parent chunk
+            image_ref: 图像引用 ID
+            chunk: 父分块
 
         Returns:
-            Image file path, or None if not found
+            图像文件路径，未找到时返回 None
         """
-        # Check if chunk metadata has images list with path info
+        # 检查分块元数据是否有包含路径信息的图像列表
         images = chunk.metadata.get("images", [])
 
         for img in images:
             if isinstance(img, dict) and img.get("image_id") == image_ref:
                 return img.get("path")
 
-        # Fallback: construct path from image_ref
-        # Assuming format: data/images/{doc_hash}/{image_id}.{ext}
-        # This is a heuristic and may need adjustment based on actual storage
-        logger.debug(f"Could not find image path in metadata for {image_ref}, using fallback")
+        # 回退：从 image_ref 构造路径
+        # 假设格式：data/images/{doc_hash}/{image_id}.{ext}
+        # 这是一个启发式方法，可能需要根据实际存储进行调整
+        logger.debug(f"在元数据中找不到 {image_ref} 的图像路径，使用回退方法")
         return None

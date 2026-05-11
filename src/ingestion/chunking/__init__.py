@@ -1,5 +1,5 @@
 """
-Chunking module for document splitting.
+文档分块模块。
 """
 from src.ingestion.chunking.document_chunker import DocumentChunker
 

@@ -9,7 +9,7 @@ class OpenAIEmbedding(BaseEmbedding):
             client_kwargs["base_url"] = api_base
         self.client = OpenAI(**client_kwargs)
         self.model = model
-        self.batch_size = kwargs.get("batch_size", 100)  # OpenAI推荐最大为2048，但小批量更稳定
+        self.batch_size = kwargs.get("batch_size", 100)  # OpenAI 推荐最大为 2048，但小批量更稳定
 
     def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
         embeddings = []
@@ -18,7 +18,7 @@ class OpenAIEmbedding(BaseEmbedding):
         for i in range(0, len(texts), self.batch_size):
             batch = texts[i:i + self.batch_size]
 
-            # OpenAI API要求非空字符串，过滤掉空的
+            # OpenAI API 要求非空字符串，过滤掉空的
             filtered_batch = [(idx, text) for idx, text in enumerate(batch) if text.strip()]
             if not filtered_batch:
                 # 如果整个批次都是空的，添加零向量
@@ -36,7 +36,7 @@ class OpenAIEmbedding(BaseEmbedding):
                 # 将结果映射回原始位置
                 batch_embeddings = [[float(x) for x in item.embedding] for item in response.data]
 
-                # 为原始批次中的每个文本分配embedding（空文本使用零向量）
+                # 为原始批次中的每个文本分配 embedding（空文本使用零向量）
                 embedding_idx = 0
                 for text in batch:
                     if text.strip():  # 非空文本
@@ -47,8 +47,8 @@ class OpenAIEmbedding(BaseEmbedding):
                         dim = 1536 if "3-small" in self.model else 3072 if "3-large" in self.model else 1536
                         embeddings.append([0.0] * dim)
             except Exception as e:
-                # 如果API调用失败，为当前批次的所有文本返回零向量
-                print(f"Error calling OpenAI API: {str(e)}")
+                # 如果 API 调用失败，为当前批次的所有文本返回零向量
+                print(f"调用 OpenAI API 时出错: {str(e)}")
                 dim = 1536 if "3-small" in self.model else 3072 if "3-large" in self.model else 1536
                 embeddings.extend([[0.0] * dim for _ in range(len(batch))])
 

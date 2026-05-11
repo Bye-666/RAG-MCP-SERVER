@@ -15,7 +15,7 @@ class VectorStoreFactory:
         store_class = cls._providers.get(provider)
 
         if not store_class:
-            raise ValueError(f"Unsupported VectorStore provider: {provider}")
+            raise ValueError(f"不支持的向量存储提供商: {provider}")
 
         return store_class(**settings['vector_store'])
 
@@ -25,13 +25,13 @@ try:
     from .chroma_store import ChromaStore
     VectorStoreFactory.register_provider("chroma", ChromaStore)
 except ImportError:
-    pass  # chromadb package not installed
+    pass  # chromadb 包未安装
 
 try:
     from .qdrant_vector_store import QdrantVectorStore
     VectorStoreFactory.register_provider("qdrant", QdrantVectorStore)
 except ImportError:
-    pass  # qdrant-client package not installed
+    pass  # qdrant-client 包未安装
 
 
 # Convenience function for backward compatibility

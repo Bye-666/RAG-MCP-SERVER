@@ -6,5 +6,5 @@ from src.core.trace import TraceContext
 class BaseEmbedding(ABC):
     @abstractmethod
     def embed(self, texts: List[str], trace: Optional[TraceContext] = None) -> List[List[float]]:
-        """Embed a list of texts into vectors"""
+        """将文本列表转换为向量"""
         pass

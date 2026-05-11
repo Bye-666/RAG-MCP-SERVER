@@ -1,10 +1,10 @@
 """
-MCP Server entry point with stdio transport.
+MCP 服务器入口点，使用 stdio 传输。
 
-Implements JSON-RPC 2.0 protocol over stdin/stdout:
-- Reads JSON-RPC requests from stdin (one per line)
-- Writes JSON-RPC responses to stdout (one per line)
-- Logs to stderr (never pollute stdout)
+通过 stdin/stdout 实现 JSON-RPC 2.0 协议：
+- 从 stdin 读取 JSON-RPC 请求（每行一个）
+- 向 stdout 写入 JSON-RPC 响应（每行一个）
+- 日志输出到 stderr（永远不污染 stdout）
 """
 
 import json
@@ -13,7 +13,7 @@ import sys
 from typing import Any, Dict, Optional
 
 
-# Configure logging to stderr only
+# 配置日志仅输出到 stderr
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class MCPServer:
-    """MCP Server implementing JSON-RPC 2.0 protocol."""
+    """MCP 服务器，实现 JSON-RPC 2.0 协议。"""
 
     def __init__(self):
         self.initialized = False
@@ -38,20 +38,20 @@ class MCPServer:
 
     def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Handle a JSON-RPC 2.0 request.
+        处理 JSON-RPC 2.0 请求。
 
         Args:
-            request: JSON-RPC request object
+            request: JSON-RPC 请求对象
 
         Returns:
-            JSON-RPC response object
+            JSON-RPC 响应对象
         """
-        # Validate JSON-RPC version
+        # 验证 JSON-RPC 版本
         if request.get("jsonrpc") != "2.0":
             return self._error_response(
                 request.get("id"),
                 -32600,
-                "Invalid Request: jsonrpc must be '2.0'"
+                "无效请求：jsonrpc 必须为 '2.0'"
             )
 
         method = request.get("method")
@@ -60,7 +60,7 @@ class MCPServer:
 
         logger.info(f"Handling request: method={method}, id={request_id}")
 
-        # Route to handler
+        # 路由到处理器
         if method == "initialize":
             return self._handle_initialize(request_id, params)
         elif method == "initialized":
@@ -73,14 +73,14 @@ class MCPServer:
             return self._error_response(
                 request_id,
                 -32601,
-                f"Method not found: {method}"
+                f"方法未找到：{method}"
             )
 
     def _handle_initialize(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle initialize request."""
+        """处理 initialize 请求。"""
         logger.info(f"Initialize request: {params}")
 
-        # Validate protocol version
+        # 验证协议版本
         client_version = params.get("protocolVersion")
         if client_version != self.protocol_version:
             logger.warning(f"Protocol version mismatch: client={client_version}, server={self.protocol_version}")
@@ -98,12 +98,12 @@ class MCPServer:
         }
 
     def _handle_initialized(self, request_id: Optional[int], params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle initialized notification."""
+        """处理 initialized 通知。"""
         logger.info("Client sent initialized notification")
 
-        # initialized is a notification, may not have id
+        # initialized 是通知，可能没有 id
         if request_id is None:
-            # No response for notifications
+            # 通知不需要响应
             return None
 
         return {
@@ -113,15 +113,15 @@ class MCPServer:
         }
 
     def _handle_tools_list(self, request_id: int) -> Dict[str, Any]:
-        """Handle tools/list request."""
+        """处理 tools/list 请求。"""
         if not self.initialized:
             return self._error_response(
                 request_id,
                 -32002,
-                "Server not initialized"
+                "服务器未初始化"
             )
 
-        # TODO: Return registered tools (E2 will implement tool registry)
+        # TODO: 返回已注册的工具（E2 将实现工具注册表）
         return {
             "jsonrpc": "2.0",
             "id": request_id,
@@ -131,12 +131,12 @@ class MCPServer:
         }
 
     def _handle_tools_call(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle tools/call request."""
+        """处理 tools/call 请求。"""
         if not self.initialized:
             return self._error_response(
                 request_id,
                 -32002,
-                "Server not initialized"
+                "服务器未初始化"
             )
 
         tool_name = params.get("name")
@@ -144,18 +144,18 @@ class MCPServer:
             return self._error_response(
                 request_id,
                 -32602,
-                "Invalid params: 'name' is required"
+                "无效参数：'name' 是必需的"
             )
 
-        # TODO: Route to tool implementation (E3+ will implement tools)
+        # TODO: 路由到工具实现（E3+ 将实现工具）
         return self._error_response(
             request_id,
             -32601,
-            f"Tool not found: {tool_name}"
+            f"工具未找到：{tool_name}"
         )
 
     def _error_response(self, request_id: Optional[int], code: int, message: str) -> Dict[str, Any]:
-        """Create JSON-RPC error response."""
+        """创建 JSON-RPC 错误响应。"""
         return {
             "jsonrpc": "2.0",
             "id": request_id,
@@ -167,10 +167,10 @@ class MCPServer:
 
     def run(self):
         """
-        Main server loop: read from stdin, write to stdout.
+        主服务器循环：从 stdin 读取，写入 stdout。
 
-        Reads JSON-RPC requests line by line from stdin.
-        Writes JSON-RPC responses line by line to stdout.
+        从 stdin 逐行读取 JSON-RPC 请求。
+        向 stdout 逐行写入 JSON-RPC 响应。
         """
         logger.info("MCP Server starting...")
         logger.info(f"Server info: {self.server_info}")
@@ -183,14 +183,14 @@ class MCPServer:
                     continue
 
                 try:
-                    # Parse JSON-RPC request
+                    # 解析 JSON-RPC 请求
                     request = json.loads(line)
                     logger.debug(f"Received request: {request}")
 
-                    # Handle request
+                    # 处理请求
                     response = self.handle_request(request)
 
-                    # Write response to stdout (if not None)
+                    # 将响应写入 stdout（如果不为 None）
                     if response is not None:
                         response_json = json.dumps(response)
                         print(response_json, flush=True)
@@ -201,7 +201,7 @@ class MCPServer:
                     error_response = self._error_response(
                         None,
                         -32700,
-                        f"Parse error: {str(e)}"
+                        f"解析错误：{str(e)}"
                     )
                     print(json.dumps(error_response), flush=True)
 
@@ -210,7 +210,7 @@ class MCPServer:
                     error_response = self._error_response(
                         None,
                         -32603,
-                        "Internal error"
+                        "内部错误"
                     )
                     print(json.dumps(error_response), flush=True)
 
@@ -223,7 +223,7 @@ class MCPServer:
 
 
 def main():
-    """Entry point."""
+    """入口点。"""
     server = MCPServer()
     server.run()
 

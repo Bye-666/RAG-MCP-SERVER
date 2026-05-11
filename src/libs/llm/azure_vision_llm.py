@@ -1,4 +1,4 @@
-"""Azure Vision LLM Implementation"""
+"""Azure Vision LLM 实现"""
 
 import base64
 import os
@@ -12,19 +12,19 @@ from .base_vision_llm import BaseVisionLLM, ChatResponse
 
 
 class AzureVisionLLM(BaseVisionLLM):
-    """Azure OpenAI Vision LLM Implementation
+    """Azure OpenAI Vision LLM 实现
 
-    Supports Azure OpenAI Vision API (GPT-4o, GPT-4-Vision-Preview) with
-    proper error handling, input validation, and automatic image preprocessing.
+    支持 Azure OpenAI Vision API（GPT-4o、GPT-4-Vision-Preview），
+    具有适当的错误处理、输入验证和自动图像预处理。
 
-    Attributes:
-        api_key: Azure OpenAI API key
-        azure_endpoint: Azure OpenAI endpoint URL
-        api_version: Azure OpenAI API version
-        deployment_name: Azure deployment name (e.g., "gpt-4o")
-        max_image_size: Maximum image dimension in pixels (default: 2048)
-        temperature: Sampling temperature (0.0-2.0)
-        max_tokens: Maximum tokens to generate
+    属性:
+        api_key: Azure OpenAI API 密钥
+        azure_endpoint: Azure OpenAI 端点 URL
+        api_version: Azure OpenAI API 版本
+        deployment_name: Azure 部署名称（例如 "gpt-4o"）
+        max_image_size: 最大图像尺寸（像素）（默认: 2048）
+        temperature: 采样温度（0.0-2.0）
+        max_tokens: 生成的最大 token 数
     """
 
     DEFAULT_MAX_IMAGE_SIZE = 2048
@@ -41,26 +41,26 @@ class AzureVisionLLM(BaseVisionLLM):
         max_tokens: Optional[int] = None,
         **kwargs
     ):
-        """Initialize Azure Vision LLM client.
+        """初始化 Azure Vision LLM 客户端。
 
-        Args:
-            api_key: Azure OpenAI API key
-            azure_endpoint: Azure OpenAI endpoint URL
-            api_version: Azure OpenAI API version (e.g., "2024-02-15-preview")
-            deployment_name: Azure deployment name
-            max_image_size: Maximum image dimension in pixels (default: 2048)
-            temperature: Sampling temperature (0.0-2.0, default: 0.7)
-            max_tokens: Maximum tokens to generate (optional)
-            **kwargs: Additional arguments (ignored but accepted for interface consistency)
+        参数:
+            api_key: Azure OpenAI API 密钥
+            azure_endpoint: Azure OpenAI 端点 URL
+            api_version: Azure OpenAI API 版本（例如 "2024-02-15-preview"）
+            deployment_name: Azure 部署名称
+            max_image_size: 最大图像尺寸（像素）（默认: 2048）
+            temperature: 采样温度（0.0-2.0，默认: 0.7）
+            max_tokens: 生成的最大 token 数（可选）
+            **kwargs: 其他参数（为接口一致性而接受但被忽略）
         """
         if not api_key:
-            raise ValueError("Azure OpenAI API key is required")
+            raise ValueError("需要 Azure OpenAI API 密钥")
         if not azure_endpoint:
-            raise ValueError("Azure OpenAI endpoint is required")
+            raise ValueError("需要 Azure OpenAI 端点")
         if not api_version:
-            raise ValueError("Azure OpenAI API version is required")
+            raise ValueError("需要 Azure OpenAI API 版本")
         if not deployment_name:
-            raise ValueError("Azure deployment name is required")
+            raise ValueError("需要 Azure 部署名称")
 
         self.client = AzureOpenAI(
             api_key=api_key,
@@ -78,35 +78,35 @@ class AzureVisionLLM(BaseVisionLLM):
         image: Union[str, bytes],
         trace: Optional[object] = None
     ) -> ChatResponse:
-        """Send text prompt with image to Azure Vision LLM.
+        """向 Azure Vision LLM 发送文本提示和图像。
 
-        Args:
-            text: Text prompt/question about the image
-            image: Image input, either:
-                - str: File path to image
-                - bytes: Raw image bytes
-            trace: Optional trace context for logging
+        参数:
+            text: 关于图像的文本提示/问题
+            image: 图像输入，可以是:
+                - str: 图像文件路径
+                - bytes: 原始图像字节
+            trace: 可选的跟踪上下文用于日志记录
 
-        Returns:
-            ChatResponse containing the model's text response
+        返回:
+            包含模型文本响应的 ChatResponse
 
-        Raises:
-            ValueError: If input validation fails
-            RuntimeError: If API request fails
+        异常:
+            ValueError: 如果输入验证失败
+            RuntimeError: 如果 API 请求失败
         """
         if not text or not text.strip():
-            raise ValueError("Text prompt cannot be empty")
+            raise ValueError("文本提示不能为空")
 
         if trace:
-            trace.log("azure_vision_llm", f"Processing image with prompt: {text[:50]}...")
+            trace.log("azure_vision_llm", f"处理图像，提示: {text[:50]}...")
 
-        # Process image to base64
+        # 将图像处理为 base64
         try:
             image_base64 = self._process_image(image, trace)
         except Exception as e:
-            raise ValueError(f"Image processing failed: {str(e)}") from e
+            raise ValueError(f"图像处理失败: {str(e)}") from e
 
-        # Build messages with vision content
+        # 构建包含视觉内容的消息
         messages = [
             {
                 "role": "user",
@@ -122,7 +122,7 @@ class AzureVisionLLM(BaseVisionLLM):
             }
         ]
 
-        # Call Azure OpenAI API
+        # 调用 Azure OpenAI API
         try:
             kwargs = {
                 "model": self.deployment_name,
@@ -133,7 +133,7 @@ class AzureVisionLLM(BaseVisionLLM):
                 kwargs["max_tokens"] = self.max_tokens
 
             if trace:
-                trace.log("azure_vision_llm", f"Calling Azure OpenAI with deployment: {self.deployment_name}")
+                trace.log("azure_vision_llm", f"调用 Azure OpenAI，部署: {self.deployment_name}")
 
             response = self.client.chat.completions.create(**kwargs)
 
@@ -145,7 +145,7 @@ class AzureVisionLLM(BaseVisionLLM):
             } if response.usage else None
 
             if trace:
-                trace.log("azure_vision_llm", f"Response received: {len(content)} chars")
+                trace.log("azure_vision_llm", f"收到响应: {len(content)} 个字符")
 
             return ChatResponse(
                 content=content,
@@ -154,57 +154,57 @@ class AzureVisionLLM(BaseVisionLLM):
             )
 
         except Exception as e:
-            error_msg = f"Azure Vision LLM API request failed: {str(e)}"
+            error_msg = f"Azure Vision LLM API 请求失败: {str(e)}"
             if trace:
-                trace.log("azure_vision_llm", f"Error: {error_msg}")
+                trace.log("azure_vision_llm", f"错误: {error_msg}")
             raise RuntimeError(error_msg) from e
 
     def _process_image(self, image: Union[str, bytes], trace: Optional[object] = None) -> str:
-        """Process image to base64 string with optional resizing.
+        """将图像处理为 base64 字符串，可选调整大小。
 
-        Args:
-            image: Image file path or bytes
-            trace: Optional trace context
+        参数:
+            image: 图像文件路径或字节
+            trace: 可选的跟踪上下文
 
-        Returns:
-            Base64 encoded image string
+        返回:
+            Base64 编码的图像字符串
 
-        Raises:
-            ValueError: If image format is invalid or file not found
-            RuntimeError: If image processing fails
+        异常:
+            ValueError: 如果图像格式无效或文件未找到
+            RuntimeError: 如果图像处理失败
         """
         try:
-            # Load image
+            # 加载图像
             if isinstance(image, str):
-                # File path
+                # 文件路径
                 image_path = Path(image)
                 if not image_path.exists():
-                    raise ValueError(f"Image file not found: {image}")
+                    raise ValueError(f"图像文件未找到: {image}")
 
-                # Check file extension
+                # 检查文件扩展名
                 if image_path.suffix.lower() not in self.SUPPORTED_IMAGE_FORMATS:
                     raise ValueError(
-                        f"Unsupported image format: {image_path.suffix}. "
-                        f"Supported formats: {', '.join(self.SUPPORTED_IMAGE_FORMATS)}"
+                        f"不支持的图像格式: {image_path.suffix}。"
+                        f"支持的格式: {', '.join(self.SUPPORTED_IMAGE_FORMATS)}"
                     )
 
                 img = Image.open(image_path)
                 if trace:
-                    trace.log("azure_vision_llm", f"Loaded image from path: {image_path.name}")
+                    trace.log("azure_vision_llm", f"从路径加载图像: {image_path.name}")
 
             elif isinstance(image, bytes):
-                # Raw bytes
+                # 原始字节
                 img = Image.open(io.BytesIO(image))
                 if trace:
-                    trace.log("azure_vision_llm", f"Loaded image from bytes: {len(image)} bytes")
+                    trace.log("azure_vision_llm", f"从字节加载图像: {len(image)} 字节")
 
             else:
-                raise ValueError(f"Image must be str (path) or bytes, got {type(image).__name__}")
+                raise ValueError(f"图像必须是 str（路径）或 bytes，得到 {type(image).__name__}")
 
-            # Resize if needed
+            # 如果需要则调整大小
             original_size = img.size
             if max(img.size) > self.max_image_size:
-                # Calculate new size maintaining aspect ratio
+                # 计算保持宽高比的新尺寸
                 ratio = self.max_image_size / max(img.size)
                 new_size = tuple(int(dim * ratio) for dim in img.size)
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
@@ -212,25 +212,25 @@ class AzureVisionLLM(BaseVisionLLM):
                 if trace:
                     trace.log(
                         "azure_vision_llm",
-                        f"Resized image from {original_size} to {img.size}"
+                        f"调整图像大小从 {original_size} 到 {img.size}"
                     )
 
-            # Convert to RGB if needed (handle RGBA, grayscale, etc.)
+            # 如果需要则转换为 RGB（处理 RGBA、灰度等）
             if img.mode not in ('RGB', 'L'):
                 img = img.convert('RGB')
 
-            # Encode to base64
+            # 编码为 base64
             buffer = io.BytesIO()
             img.save(buffer, format='JPEG', quality=85)
             image_bytes = buffer.getvalue()
             image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
             if trace:
-                trace.log("azure_vision_llm", f"Encoded image to base64: {len(image_base64)} chars")
+                trace.log("azure_vision_llm", f"将图像编码为 base64: {len(image_base64)} 个字符")
 
             return image_base64
 
         except ValueError:
-            raise  # Re-raise validation errors
+            raise  # 重新抛出验证错误
         except Exception as e:
-            raise RuntimeError(f"Image processing failed: {str(e)}") from e
+            raise RuntimeError(f"图像处理失败: {str(e)}") from e

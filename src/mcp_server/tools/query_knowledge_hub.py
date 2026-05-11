@@ -1,4 +1,4 @@
-"""Query knowledge hub tool implementation."""
+"""查询知识中心工具实现。"""
 
 from typing import Dict, Any, Optional
 from ...core.config import Settings
@@ -8,25 +8,25 @@ from ...core.response.response_builder import ResponseBuilder
 
 
 def get_tool_schema() -> Dict[str, Any]:
-    """Get the tool schema for query_knowledge_hub."""
+    """获取 query_knowledge_hub 的工具 schema。"""
     return {
         "name": "query_knowledge_hub",
-        "description": "Search the knowledge base using hybrid retrieval (dense + sparse + reranking)",
+        "description": "使用混合检索（稠密 + 稀疏 + 重排序）搜索知识库",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "The search query text"
+                    "description": "搜索查询文本"
                 },
                 "top_k": {
                     "type": "integer",
-                    "description": "Number of results to return (default: 10)",
+                    "description": "返回的结果数量（默认：10）",
                     "default": 10
                 },
                 "collection": {
                     "type": "string",
-                    "description": "Optional collection name to filter results"
+                    "description": "可选的集合名称，用于过滤结果"
                 }
             },
             "required": ["query"]
@@ -35,7 +35,7 @@ def get_tool_schema() -> Dict[str, Any]:
 
 
 class QueryKnowledgeHub:
-    """Query knowledge hub tool handler."""
+    """查询知识中心工具处理器。"""
 
     def __init__(
         self,
@@ -45,13 +45,13 @@ class QueryKnowledgeHub:
         response_builder: Optional[ResponseBuilder] = None
     ):
         """
-        Initialize query knowledge hub tool.
+        初始化查询知识中心工具。
 
         Args:
-            settings: Application settings
-            hybrid_search: HybridSearch instance (creates default if None)
-            reranker: Reranker instance (creates default if None)
-            response_builder: ResponseBuilder instance (creates default if None)
+            settings: 应用程序设置
+            hybrid_search: HybridSearch 实例（如果为 None 则创建默认实例）
+            reranker: Reranker 实例（如果为 None 则创建默认实例）
+            response_builder: ResponseBuilder 实例（如果为 None 则创建默认实例）
         """
         self.settings = settings
         self.hybrid_search = hybrid_search or self._create_hybrid_search()
@@ -59,7 +59,7 @@ class QueryKnowledgeHub:
         self.response_builder = response_builder or ResponseBuilder()
 
     def _create_hybrid_search(self) -> HybridSearch:
-        """Create HybridSearch instance with all dependencies."""
+        """创建包含所有依赖项的 HybridSearch 实例。"""
         from ...core.query_engine.query_processor import QueryProcessor
         from ...core.query_engine.dense_retriever import DenseRetriever
         from ...core.query_engine.sparse_retriever import SparseRetriever
@@ -68,7 +68,7 @@ class QueryKnowledgeHub:
         from ...ingestion.storage.vector_store import VectorStoreFactory
         from ...ingestion.storage.bm25_indexer import BM25Indexer
 
-        # Initialize components
+        # 初始化组件
         query_processor = QueryProcessor(self.settings)
 
         embedding_client = EmbeddingFactory.create(self.settings.model_dump())
@@ -90,38 +90,38 @@ class QueryKnowledgeHub:
 
     def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Execute the query_knowledge_hub tool.
+        执行 query_knowledge_hub 工具。
 
         Args:
-            arguments: Tool arguments (query, top_k, collection)
+            arguments: 工具参数（query、top_k、collection）
 
         Returns:
-            MCP tool result with content and metadata
+            包含内容和元数据的 MCP 工具结果
         """
-        # Validate arguments
+        # 验证参数
         query = arguments.get('query')
         if not query:
             return {
-                "content": [{"type": "text", "text": "Error: query parameter is required"}],
+                "content": [{"type": "text", "text": "错误：query 参数是必需的"}],
                 "isError": True
             }
 
         top_k = arguments.get('top_k', 10)
         collection = arguments.get('collection')
 
-        # Build filters
+        # 构建过滤器
         filters = {}
         if collection:
             filters['collection'] = collection
 
-        # Execute hybrid search
+        # 执行混合搜索
         search_results = self.hybrid_search.search(
             query=query,
             top_k=top_k,
             filters=filters if filters else None
         )
 
-        # Rerank results
+        # 重排序结果
         rerank_result = self.reranker.rerank(
             query=query,
             candidates=[
@@ -135,7 +135,7 @@ class QueryKnowledgeHub:
             ]
         )
 
-        # Build MCP response
+        # 构建 MCP 响应
         mcp_response = self.response_builder.build(
             retrieval_results=rerank_result['results'],
             query=query
@@ -147,19 +147,19 @@ class QueryKnowledgeHub:
         }
 
 
-# Global instance (initialized on first use)
+# 全局实例（首次使用时初始化）
 _tool_instance: Optional[QueryKnowledgeHub] = None
 
 
 def query_knowledge_hub(arguments: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Query knowledge hub tool entry point.
+    查询知识中心工具入口点。
 
     Args:
-        arguments: Tool arguments from MCP client
+        arguments: 来自 MCP 客户端的工具参数
 
     Returns:
-        MCP tool result
+        MCP 工具结果
     """
     global _tool_instance
 

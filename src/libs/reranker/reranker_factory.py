@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type
 
 
 class NoneReranker(BaseReranker):
-    """Pass-through reranker that maintains original order"""
+    """直通重排序器，保持原始顺序"""
 
     def rerank(self, query, candidates, trace=None):
         return candidates
@@ -22,9 +22,9 @@ class RerankerFactory:
         reranker_class = cls._providers.get(provider)
 
         if not reranker_class:
-            raise ValueError(f"Unsupported Reranker provider: {provider}")
+            raise ValueError(f"不支持的重排序器提供商: {provider}")
 
-        # Special handling for LLM reranker which needs an LLM instance
+        # LLM 重排序器的特殊处理，需要 LLM 实例
         if provider == 'llm':
             from ..llm.llm_factory import LLMFactory
             llm_settings = settings.get('llm', {})
@@ -35,7 +35,7 @@ class RerankerFactory:
 
             return reranker_class(llm=llm, prompt_path=prompt_path)
 
-        # Special handling for Cross-Encoder reranker which needs model configuration
+        # Cross-Encoder 重排序器的特殊处理，需要模型配置
         if provider == 'cross_encoder':
             reranker_settings = settings.get('reranker', {})
             model_name = reranker_settings.get('model', 'cross-encoder/ms-marco-MiniLM-L-6-v2')
@@ -51,11 +51,11 @@ try:
     from .llm_reranker import LLMReranker
     RerankerFactory.register_provider("llm", LLMReranker)
 except ImportError:
-    pass  # LLM dependencies not available
+    pass  # LLM 依赖不可用
 
 # Register Cross-Encoder reranker
 try:
     from .cross_encoder_reranker import CrossEncoderReranker
     RerankerFactory.register_provider("cross_encoder", CrossEncoderReranker)
 except ImportError:
-    pass  # sentence-transformers not available
+    pass  # sentence-transformers 不可用

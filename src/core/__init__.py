@@ -1,4 +1,4 @@
-# Core module initialization
+# 核心模块初始化
 
 from .types import Document, Chunk, ChunkRecord, ImageMetadata
 

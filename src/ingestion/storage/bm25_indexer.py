@@ -1,8 +1,7 @@
-"""BM25 Indexer for building and persisting inverted indices
+"""用于构建和持久化倒排索引的 BM25 索引器
 
-This module provides the BM25Indexer class that builds inverted indices
-from sparse-encoded chunks, calculates IDF scores, and persists the index
-to disk for retrieval.
+该模块提供 BM25Indexer 类，从稀疏编码的块构建倒排索引，
+计算 IDF 分数，并将索引持久化到磁盘以供检索。
 """
 
 import os
@@ -16,12 +15,12 @@ from src.core.types import ChunkRecord
 
 @dataclass
 class PostingEntry:
-    """A single posting in the inverted index
+    """倒排索引中的单个发布条目
 
     Attributes:
-        chunk_id: ID of the chunk containing this term
-        tf: Term frequency (normalized by document length)
-        doc_length: Total number of terms in the document
+        chunk_id: 包含此词项的块的 ID
+        tf: 词频（按文档长度标准化）
+        doc_length: 文档中的词项总数
     """
     chunk_id: str
     tf: float
@@ -30,12 +29,12 @@ class PostingEntry:
 
 @dataclass
 class TermIndex:
-    """Index entry for a single term
+    """单个词项的索引条目
 
     Attributes:
-        term: The term string
-        idf: Inverse document frequency score
-        postings: List of posting entries for this term
+        term: 词项字符串
+        idf: 逆文档频率分数
+        postings: 此词项的发布条目列表
     """
     term: str
     idf: float
@@ -43,72 +42,71 @@ class TermIndex:
 
 
 class BM25Indexer:
-    """Builds and manages BM25 inverted index
+    """构建和管理 BM25 倒排索引
 
-    This indexer takes ChunkRecords with sparse vectors (term weights),
-    builds an inverted index, calculates IDF scores, and persists the
-    index to disk.
+    该索引器接收带有稀疏向量（词项权重）的 ChunkRecords，
+    构建倒排索引，计算 IDF 分数，并将索引持久化到磁盘。
 
     Attributes:
-        index_dir: Directory where index files are stored
-        index: Dictionary mapping terms to TermIndex objects
-        num_documents: Total number of documents in the index
+        index_dir: 存储索引文件的目录
+        index: 将词项映射到 TermIndex 对象的字典
+        num_documents: 索引中的文档总数
     """
 
     def __init__(self, index_dir=None, settings=None):
-        """Initialize the BM25 indexer
+        """初始化 BM25 索引器
 
         Args:
-            index_dir: Directory to store index files (string) or Settings object for backward compatibility
-            settings: Optional Settings object (for keyword argument compatibility)
+            index_dir: 存储索引文件的目录（字符串）或用于向后兼容的 Settings 对象
+            settings: 可选的 Settings 对象（用于关键字参数兼容性）
         """
-        # Determine index_dir based on arguments
-        final_index_dir = "data/db/bm25"  # default
+        # 根据参数确定 index_dir
+        final_index_dir = "data/db/bm25"  # 默认
 
-        # Handle different calling patterns
+        # 处理不同的调用模式
         if settings is not None:
-            # Called with settings=settings keyword argument
-            # Use default index_dir (could extract from settings in future)
+            # 使用 settings=settings 关键字参数调用
+            # 使用默认 index_dir（将来可以从 settings 中提取）
             pass
         elif index_dir is not None:
-            # Check if it's a Settings object (has __dict__ or is not a string)
+            # 检查它是否是 Settings 对象（有 __dict__ 或不是字符串）
             if isinstance(index_dir, str):
-                # It's an index_dir string
+                # 它是 index_dir 字符串
                 final_index_dir = index_dir
             else:
-                # It's a Settings object passed as first positional arg
-                # Use default index_dir
+                # 它是作为第一个位置参数传递的 Settings 对象
+                # 使用默认 index_dir
                 pass
 
         self.index_dir = final_index_dir
         self.index: Dict[str, TermIndex] = {}
         self.num_documents: int = 0
 
-        # Create index directory if it doesn't exist
+        # 如果索引目录不存在则创建
         os.makedirs(self.index_dir, exist_ok=True)
 
     def build(self, records: List[ChunkRecord]) -> None:
-        """Build inverted index from chunk records
+        """从块记录构建倒排索引
 
         Args:
-            records: List of ChunkRecord objects with sparse_vector populated
+            records: 填充了 sparse_vector 的 ChunkRecord 对象列表
 
         Raises:
-            ValueError: If records list is empty or sparse vectors are missing
+            ValueError: 如果记录列表为空或缺少稀疏向量
         """
         if not records:
-            raise ValueError("records list cannot be empty")
+            raise ValueError("记录列表不能为空")
 
-        # Verify all records have sparse vectors
+        # 验证所有记录都有稀疏向量
         for record in records:
             if record.sparse_vector is None:
-                raise ValueError(f"Record {record.id} missing sparse_vector")
+                raise ValueError(f"记录 {record.id} 缺少 sparse_vector")
 
-        # Clear existing index
+        # 清除现有索引
         self.index = {}
         self.num_documents = len(records)
 
-        # Build inverted index structure
+        # 构建倒排索引结构
         term_doc_freq: Dict[str, int] = defaultdict(int)
         term_postings: Dict[str, List[PostingEntry]] = defaultdict(list)
 
@@ -116,14 +114,14 @@ class BM25Indexer:
             sparse_vector = record.sparse_vector
             doc_length = len(sparse_vector)
 
-            # Track which terms appear in this document
+            # 跟踪此文档中出现的词项
             doc_terms = set(sparse_vector.keys())
 
-            # Update document frequency for each unique term
+            # 更新每个唯一词项的文档频率
             for term in doc_terms:
                 term_doc_freq[term] += 1
 
-            # Create posting entries
+            # 创建发布条目
             for term, tf in sparse_vector.items():
                 posting = PostingEntry(
                     chunk_id=record.id,
@@ -132,7 +130,7 @@ class BM25Indexer:
                 )
                 term_postings[term].append(posting)
 
-        # Calculate IDF and build final index
+        # 计算 IDF 并构建最终索引
         for term, df in term_doc_freq.items():
             idf = self._calculate_idf(df, self.num_documents)
             self.index[term] = TermIndex(
@@ -142,28 +140,28 @@ class BM25Indexer:
             )
 
     def _calculate_idf(self, df: int, num_docs: int) -> float:
-        """Calculate IDF score for a term
+        """计算词项的 IDF 分数
 
-        Uses the BM25 IDF formula: log((N - df + 0.5) / (df + 0.5))
+        使用 BM25 IDF 公式: log((N - df + 0.5) / (df + 0.5))
 
         Args:
-            df: Document frequency (number of documents containing the term)
-            num_docs: Total number of documents
+            df: 文档频率（包含该词项的文档数）
+            num_docs: 文档总数
 
         Returns:
-            IDF score
+            IDF 分数
         """
         return math.log((num_docs - df + 0.5) / (df + 0.5))
 
     def save(self, filename: str = "index.pkl") -> None:
-        """Save index to disk
+        """将索引保存到磁盘
 
         Args:
-            filename: Name of the index file
+            filename: 索引文件名
         """
         filepath = os.path.join(self.index_dir, filename)
 
-        # Prepare data for serialization
+        # 准备序列化数据
         index_data = {
             'index': self.index,
             'num_documents': self.num_documents
@@ -173,18 +171,18 @@ class BM25Indexer:
             pickle.dump(index_data, f)
 
     def load(self, filename: str = "index.pkl") -> None:
-        """Load index from disk
+        """从磁盘加载索引
 
         Args:
-            filename: Name of the index file
+            filename: 索引文件名
 
         Raises:
-            FileNotFoundError: If index file doesn't exist
+            FileNotFoundError: 如果索引文件不存在
         """
         filepath = os.path.join(self.index_dir, filename)
 
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Index file not found: {filepath}")
+            raise FileNotFoundError(f"索引文件未找到: {filepath}")
 
         with open(filepath, 'rb') as f:
             index_data = pickle.load(f)
@@ -193,19 +191,19 @@ class BM25Indexer:
         self.num_documents = index_data['num_documents']
 
     def query(self, terms: List[str], top_k: int = 10) -> List[Tuple[str, float]]:
-        """Query the index for relevant chunks
+        """查询索引以获取相关块
 
         Args:
-            terms: List of query terms
-            top_k: Number of top results to return
+            terms: 查询词项列表
+            top_k: 返回的顶部结果数
 
         Returns:
-            List of (chunk_id, score) tuples sorted by score descending
+            按分数降序排序的 (chunk_id, score) 元组列表
         """
         if not terms:
             return []
 
-        # Accumulate scores for each chunk
+        # 累积每个块的分数
         chunk_scores: Dict[str, float] = defaultdict(float)
 
         for term in terms:
@@ -215,13 +213,13 @@ class BM25Indexer:
 
             term_index = self.index[term_lower]
 
-            # Add IDF-weighted scores for each posting
+            # 为每个发布添加 IDF 加权分数
             for posting in term_index.postings:
-                # Simple scoring: TF * IDF
+                # 简单评分: TF * IDF
                 score = posting.tf * term_index.idf
                 chunk_scores[posting.chunk_id] += score
 
-        # Sort by score descending and return top_k
+        # 按分数降序排序并返回 top_k
         sorted_results = sorted(
             chunk_scores.items(),
             key=lambda x: x[1],
@@ -231,21 +229,21 @@ class BM25Indexer:
         return sorted_results[:top_k]
 
     def get_term_info(self, term: str) -> Optional[TermIndex]:
-        """Get index information for a specific term
+        """获取特定词项的索引信息
 
         Args:
-            term: The term to look up
+            term: 要查找的词项
 
         Returns:
-            TermIndex object if term exists, None otherwise
+            如果词项存在则返回 TermIndex 对象，否则返回 None
         """
         return self.index.get(term.lower())
 
     def get_stats(self) -> Dict[str, any]:
-        """Get index statistics
+        """获取索引统计信息
 
         Returns:
-            Dictionary with index statistics
+            包含索引统计信息的字典
         """
         return {
             'num_documents': self.num_documents,
@@ -254,13 +252,13 @@ class BM25Indexer:
         }
 
     def remove_document(self, chunk_ids: List[str]) -> int:
-        """Remove documents from the index by chunk IDs
+        """通过块 ID 从索引中删除文档
 
         Args:
-            chunk_ids: List of chunk IDs to remove
+            chunk_ids: 要删除的块 ID 列表
 
         Returns:
-            Number of postings removed
+            删除的发布数
         """
         if not chunk_ids:
             return 0
@@ -269,7 +267,7 @@ class BM25Indexer:
         removed_count = 0
         terms_to_remove = []
 
-        # Remove postings for the specified chunk IDs
+        # 删除指定块 ID 的发布
         for term, term_index in self.index.items():
             original_count = len(term_index.postings)
             term_index.postings = [
@@ -278,15 +276,15 @@ class BM25Indexer:
             ]
             removed_count += original_count - len(term_index.postings)
 
-            # Mark terms with no postings for removal
+            # 标记没有发布的词项以供删除
             if not term_index.postings:
                 terms_to_remove.append(term)
 
-        # Remove empty terms
+        # 删除空词项
         for term in terms_to_remove:
             del self.index[term]
 
-        # Update document count (approximate - assumes each chunk is a document)
+        # 更新文档计数（近似 - 假设每个块是一个文档）
         self.num_documents = max(0, self.num_documents - len(chunk_ids))
 
         return removed_count

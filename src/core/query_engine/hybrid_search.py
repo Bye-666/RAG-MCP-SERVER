@@ -1,8 +1,8 @@
 """
-Hybrid Search Engine combining dense and sparse retrieval.
+结合稠密和稀疏检索的混合搜索引擎。
 
-Orchestrates QueryProcessor, DenseRetriever, SparseRetriever, and RRF Fusion
-for comprehensive semantic + keyword search.
+编排 QueryProcessor、DenseRetriever、SparseRetriever 和 RRF Fusion
+以实现全面的语义 + 关键词搜索。
 """
 
 from typing import List, Optional, Dict, Any
@@ -18,16 +18,16 @@ from src.core.query_engine.fusion import RRFFusion
 
 class HybridSearch:
     """
-    Hybrid search engine combining dense and sparse retrieval.
+    结合稠密和稀疏检索的混合搜索引擎。
 
-    Pipeline:
-    1. QueryProcessor: extract keywords and parse filters
-    2. Parallel retrieval:
-       - DenseRetriever: semantic vector search
-       - SparseRetriever: BM25 keyword search
-    3. RRF Fusion: combine rankings
-    4. Metadata filtering: post-filter by metadata
-    5. Top-K selection
+    流水线:
+    1. QueryProcessor: 提取关键词并解析过滤器
+    2. 并行检索:
+       - DenseRetriever: 语义向量搜索
+       - SparseRetriever: BM25 关键词搜索
+    3. RRF Fusion: 合并排名
+    4. 元数据过滤: 按元数据后过滤
+    5. Top-K 选择
     """
 
     def __init__(
@@ -39,18 +39,18 @@ class HybridSearch:
         fusion: Optional[RRFFusion] = None
     ):
         """
-        Initialize HybridSearch.
+        初始化 HybridSearch。
 
-        Args:
-            settings: Application settings
-            query_processor: Optional query processor (for dependency injection)
-            dense_retriever: Optional dense retriever (for dependency injection)
-            sparse_retriever: Optional sparse retriever (for dependency injection)
-            fusion: Optional RRF fusion (for dependency injection)
+        参数:
+            settings: 应用程序设置
+            query_processor: 可选的查询处理器（用于依赖注入）
+            dense_retriever: 可选的稠密检索器（用于依赖注入）
+            sparse_retriever: 可选的稀疏检索器（用于依赖注入）
+            fusion: 可选的 RRF 融合（用于依赖注入）
         """
         self.settings = settings
 
-        # Use injected dependencies or create defaults
+        # 使用注入的依赖或创建默认值
         self.query_processor = query_processor or QueryProcessor()
         self.dense_retriever = dense_retriever or DenseRetriever(settings)
         self.sparse_retriever = sparse_retriever or SparseRetriever(settings)
@@ -64,26 +64,26 @@ class HybridSearch:
         trace: Optional[TraceContext] = None
     ) -> List[RetrievalResult]:
         """
-        Perform hybrid search combining dense and sparse retrieval.
+        执行结合稠密和稀疏检索的混合搜索。
 
-        Args:
-            query: User query string
-            top_k: Number of results to return
-            filters: Optional metadata filters
-            trace: Optional trace context
+        参数:
+            query: 用户查询字符串
+            top_k: 返回的结果数量
+            filters: 可选的元数据过滤器
+            trace: 可选的追踪上下文
 
-        Returns:
-            List of top-k RetrievalResult sorted by relevance
+        返回:
+            按相关性排序的 top-k RetrievalResult 列表
 
-        Raises:
-            ValueError: If query is empty or top_k is invalid
+        异常:
+            ValueError: 如果查询为空或 top_k 无效
         """
         if not query or not query.strip():
-            raise ValueError("Query cannot be empty")
+            raise ValueError("查询不能为空")
         if top_k <= 0:
-            raise ValueError("top_k must be positive")
+            raise ValueError("top_k 必须为正数")
 
-        # Step 1: Process query
+        # 步骤 1: 处理查询
         if trace:
             stage = trace.record_stage("query_processing", {
                 "query_length": len(query),
@@ -98,14 +98,14 @@ class HybridSearch:
                 "has_filters": bool(processed_query.filters)
             })
 
-        # Step 2: Parallel retrieval (with fallback)
+        # 步骤 2: 并行检索（带回退）
         dense_results = []
         sparse_results = []
 
-        # Retrieve more candidates for fusion (2x top_k)
+        # 为融合检索更多候选（2x top_k）
         candidate_k = top_k * 2
 
-        # Dense retrieval
+        # 稠密检索
         if trace:
             stage = trace.record_stage("dense_retrieval", {
                 "top_k": candidate_k,
@@ -131,9 +131,9 @@ class HybridSearch:
                     "success": False,
                     "error": str(e)
                 })
-            # Continue with sparse only
+            # 仅使用稀疏检索继续
 
-        # Sparse retrieval
+        # 稀疏检索
         if trace:
             stage = trace.record_stage("sparse_retrieval", {
                 "keyword_count": len(processed_query.keywords),
@@ -160,13 +160,13 @@ class HybridSearch:
                     "success": False,
                     "error": str(e)
                 })
-            # Continue with dense only
+            # 仅使用稠密检索继续
 
-        # If both failed, return empty
+        # 如果两者都失败，返回空
         if not dense_results and not sparse_results:
             return []
 
-        # Step 3: Fusion
+        # 步骤 3: 融合
         if trace:
             stage = trace.record_stage("fusion", {
                 "dense_count": len(dense_results),
@@ -179,7 +179,7 @@ class HybridSearch:
         if trace:
             trace.finish_stage(stage, {"fused_count": len(fused_results)})
 
-        # Step 4: Apply metadata filters (post-filter fallback)
+        # 步骤 4: 应用元数据过滤器（后过滤回退）
         if filters:
             if trace:
                 stage = trace.record_stage("hybrid_search_metadata_filter", {
@@ -191,7 +191,7 @@ class HybridSearch:
             if trace:
                 trace.finish_stage(stage, {"filtered_count": len(fused_results)})
 
-        # Step 5: Top-K selection
+        # 步骤 5: Top-K 选择
         results = fused_results[:top_k]
 
         return results
@@ -202,24 +202,23 @@ class HybridSearch:
         filters: Dict[str, Any]
     ) -> List[RetrievalResult]:
         """
-        Apply metadata filters to candidate results (post-filter fallback).
+        对候选结果应用元数据过滤器（后过滤回退）。
 
-        This is a fallback mechanism for when vector store filters don't work
-        or when additional filtering is needed.
+        这是当向量存储过滤器不起作用或需要额外过滤时的回退机制。
 
-        Args:
-            candidates: List of candidate results
-            filters: Metadata filters to apply
+        参数:
+            candidates: 候选结果列表
+            filters: 要应用的元数据过滤器
 
-        Returns:
-            Filtered list of results
+        返回:
+            过滤后的结果列表
         """
         if not filters:
             return candidates
 
         filtered = []
         for result in candidates:
-            # Check if all filter conditions match
+            # 检查所有过滤条件是否匹配
             match = True
             for key, value in filters.items():
                 metadata_value = result.metadata.get(key)

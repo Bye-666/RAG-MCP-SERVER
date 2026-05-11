@@ -1,5 +1,5 @@
 """
-PDF Loader implementation using markitdown.
+使用 markitdown 的 PDF 加载器实现。
 """
 import hashlib
 from pathlib import Path
@@ -13,58 +13,58 @@ from src.libs.loader.base_loader import BaseLoader
 
 class PdfLoader(BaseLoader):
     """
-    PDF document loader using markitdown library.
+    使用 markitdown 库的 PDF 文档加载器。
 
-    Extracts text content from PDF files and converts to Markdown format.
+    从 PDF 文件中提取文本内容并转换为 Markdown 格式。
     """
 
     def __init__(self):
-        """Initialize the PDF loader."""
+        """初始化 PDF 加载器。"""
         self._converter = MarkItDown()
 
     def load(self, path: Union[str, Path]) -> Document:
         """
-        Load a PDF document from the given file path.
+        从给定的文件路径加载 PDF 文档。
 
-        Args:
-            path: Path to the PDF file
+        参数:
+            path: PDF 文件路径
 
-        Returns:
-            Document object with extracted content and metadata
+        返回:
+            包含提取内容和元数据的 Document 对象
 
-        Raises:
-            FileNotFoundError: If the file does not exist
-            ValueError: If the file is not a valid PDF
-            Exception: If the PDF cannot be parsed
+        异常:
+            FileNotFoundError: 如果文件不存在
+            ValueError: 如果文件不是有效的 PDF
+            Exception: 如果 PDF 无法解析
         """
-        # Convert to Path object
+        # 转换为 Path 对象
         file_path = Path(path)
 
-        # Check file exists
+        # 检查文件是否存在
         if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(f"文件未找到: {file_path}")
 
-        # Validate PDF format
+        # 验证 PDF 格式
         if not self._is_valid_pdf(file_path):
-            raise ValueError(f"File is not a valid PDF: {file_path}")
+            raise ValueError(f"文件不是有效的 PDF: {file_path}")
 
-        # Compute document ID based on file content hash
+        # 基于文件内容哈希计算文档 ID
         doc_id = self._compute_file_hash(file_path)
 
-        # Extract text using markitdown
+        # 使用 markitdown 提取文本
         try:
             result = self._converter.convert(str(file_path))
             text_content = result.text_content
         except Exception as e:
-            raise Exception(f"Failed to parse PDF: {e}") from e
+            raise Exception(f"解析 PDF 失败: {e}") from e
 
-        # Build metadata
+        # 构建元数据
         metadata = {
             "source_path": str(file_path),
             "doc_type": "pdf",
         }
 
-        # Create Document
+        # 创建 Document
         doc = Document(
             id=doc_id,
             text=text_content,
@@ -75,13 +75,13 @@ class PdfLoader(BaseLoader):
 
     def _compute_file_hash(self, file_path: Path) -> str:
         """
-        Compute SHA256 hash of file content.
+        计算文件内容的 SHA256 哈希。
 
-        Args:
-            file_path: Path to the file
+        参数:
+            file_path: 文件路径
 
-        Returns:
-            Hex string of SHA256 hash
+        返回:
+            SHA256 哈希的十六进制字符串
         """
         sha256 = hashlib.sha256()
         with open(file_path, "rb") as f:
@@ -91,13 +91,13 @@ class PdfLoader(BaseLoader):
 
     def _is_valid_pdf(self, file_path: Path) -> bool:
         """
-        Check if file is a valid PDF by checking the header.
+        通过检查文件头来检查文件是否为有效的 PDF。
 
-        Args:
-            file_path: Path to the file
+        参数:
+            file_path: 文件路径
 
-        Returns:
-            True if file starts with PDF header, False otherwise
+        返回:
+            如果文件以 PDF 头开始则为 True，否则为 False
         """
         try:
             with open(file_path, "rb") as f:

@@ -1,8 +1,8 @@
 """
-Ingestion Pipeline for document processing.
+文档处理的数据摄取管道。
 
-Orchestrates the complete ingestion flow:
-integrity → load → split → transform → encode → store
+协调完整的数据摄取流程：
+完整性检查 → 加载 → 分割 → 转换 → 编码 → 存储
 """
 
 from pathlib import Path
@@ -23,7 +23,7 @@ from src.ingestion.storage.image_storage import ImageStorage
 
 @dataclass
 class PipelineConfig:
-    """Configuration for ingestion pipeline"""
+    """数据摄取管道的配置"""
     collection: str = "default"
     force_reprocess: bool = False
     enable_transforms: bool = True
@@ -33,15 +33,15 @@ class PipelineConfig:
 
 class IngestionPipeline:
     """
-    Orchestrates the complete document ingestion pipeline.
+    协调完整的文档数据摄取管道。
 
-    Pipeline stages:
-    1. Integrity check (skip if already processed)
-    2. Load document
-    3. Split into chunks
-    4. Transform (refine, enrich, caption)
-    5. Encode (dense + sparse vectors)
-    6. Store (vector store + BM25 index + images)
+    管道阶段：
+    1. 完整性检查（如果已处理则跳过）
+    2. 加载文档
+    3. 分割为块
+    4. 转换（精炼、增强、标题生成）
+    5. 编码（密集 + 稀疏向量）
+    6. 存储（向量存储 + BM25 索引 + 图像）
     """
 
     def __init__(
@@ -57,18 +57,18 @@ class IngestionPipeline:
         on_progress: Optional[Callable[[str, int, int], None]] = None
     ):
         """
-        Initialize ingestion pipeline.
+        初始化数据摄取管道。
 
         Args:
-            integrity_checker: File integrity checker
-            loader: Document loader
-            chunker: Document chunker
-            transforms: List of transform operations (optional)
-            batch_processor: Batch processor for encoding (optional)
-            vector_upserter: Vector store upserter (optional)
-            bm25_indexer: BM25 indexer (optional)
-            image_storage: Image storage (optional)
-            on_progress: Progress callback function(stage_name, current, total)
+            integrity_checker: 文件完整性检查器
+            loader: 文档加载器
+            chunker: 文档分块器
+            transforms: 转换操作列表（可选）
+            batch_processor: 用于编码的批处理器（可选）
+            vector_upserter: 向量存储上传器（可选）
+            bm25_indexer: BM25 索引器（可选）
+            image_storage: 图像存储（可选）
+            on_progress: 进度回调函数(stage_name, current, total)
         """
         self.integrity_checker = integrity_checker
         self.loader = loader
@@ -81,7 +81,7 @@ class IngestionPipeline:
         self.on_progress = on_progress
 
     def _report_progress(self, stage_name: str, current: int, total: int):
-        """Report progress to callback if available"""
+        """如果可用，向回调报告进度"""
         if self.on_progress:
             self.on_progress(stage_name, current, total)
 
@@ -92,31 +92,31 @@ class IngestionPipeline:
         trace: Optional[TraceContext] = None
     ) -> dict:
         """
-        Ingest a single file through the complete pipeline.
+        通过完整管道摄取单个文件。
 
         Args:
-            file_path: Path to file to ingest
-            config: Pipeline configuration
-            trace: Optional trace context
+            file_path: 要摄取的文件路径
+            config: 管道配置
+            trace: 可选的跟踪上下文
 
         Returns:
-            Dictionary with ingestion results:
+            包含摄取结果的字典：
             - skipped: bool
             - file_hash: str
             - chunk_count: int
             - image_count: int
-            - error: str (if failed)
+            - error: str（如果失败）
 
         Raises:
-            FileNotFoundError: If file doesn't exist
-            Exception: For other processing errors
+            FileNotFoundError: 如果文件不存在
+            Exception: 其他处理错误
         """
         if config is None:
             config = PipelineConfig()
 
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(f"文件未找到: {file_path}")
 
         result = {
             "file_path": str(file_path),
@@ -128,7 +128,7 @@ class IngestionPipeline:
         }
 
         try:
-            # Stage 1: Integrity check
+            # 阶段 1: 完整性检查
             self._report_progress("integrity_check", 0, 1)
             file_hash = self.integrity_checker.compute_sha256(str(file_path))
             result["file_hash"] = file_hash
@@ -138,7 +138,7 @@ class IngestionPipeline:
                 self._report_progress("integrity_check", 1, 1)
                 return result
 
-            # Stage 2: Load document
+            # 阶段 2: 加载文档
             if trace:
                 stage = trace.record_stage("load", {
                     "file": str(file_path),
@@ -155,7 +155,7 @@ class IngestionPipeline:
                     "text_length": len(document.text)
                 })
 
-            # Stage 3: Split into chunks
+            # 阶段 3: 分割为块
             if trace:
                 stage = trace.record_stage("split", {
                     "doc_id": document.id,
@@ -170,7 +170,7 @@ class IngestionPipeline:
             if trace:
                 trace.finish_stage(stage, {"chunk_count": len(chunks)})
 
-            # Stage 4: Transform (optional)
+            # 阶段 4: 转换（可选）
             if config.enable_transforms and self.transforms:
                 for idx, transform in enumerate(self.transforms):
                     if trace:
@@ -186,7 +186,7 @@ class IngestionPipeline:
                     if trace:
                         trace.finish_stage(stage, {"output_count": len(chunks)})
 
-            # Stage 5: Encode
+            # 阶段 5: 编码
             records = []
             if self.batch_processor:
                 if trace:
@@ -206,11 +206,11 @@ class IngestionPipeline:
                         "sparse_count": sum(1 for r in records if r.sparse_vector is not None)
                     })
             else:
-                # No encoding, convert chunks to records
+                # 无编码，将块转换为记录
                 records = [ChunkRecord.from_chunk(chunk) for chunk in chunks]
 
-            # Stage 6: Store
-            # 6a. Vector store (if dense vectors available)
+            # 阶段 6: 存储
+            # 6a. 向量存储（如果密集向量可用）
             if self.vector_upserter and config.enable_dense_encoding:
                 dense_records = [r for r in records if r.dense_vector is not None]
                 if dense_records:
@@ -228,7 +228,7 @@ class IngestionPipeline:
                     if trace:
                         trace.finish_stage(stage, {"success": True})
 
-            # 6b. BM25 index (if sparse vectors available)
+            # 6b. BM25 索引（如果稀疏向量可用）
             if self.bm25_indexer and config.enable_sparse_encoding:
                 sparse_records = [r for r in records if r.sparse_vector is not None]
                 if sparse_records:
@@ -237,17 +237,17 @@ class IngestionPipeline:
                     self.bm25_indexer.save()
                     self._report_progress("bm25_index", len(sparse_records), len(sparse_records))
 
-            # 6c. Images (if any)
+            # 6c. 图像（如果有）
             if self.image_storage and "images" in document.metadata:
                 images = document.metadata.get("images", [])
                 result["image_count"] = len(images)
                 if images:
                     self._report_progress("store_images", 0, len(images))
-                    # Images are already saved by loader, just record in index
-                    # (This is a placeholder - actual implementation depends on loader behavior)
+                    # 图像已由加载器保存，只需在索引中记录
+                    # （这是一个占位符 - 实际实现取决于加载器行为）
                     self._report_progress("store_images", len(images), len(images))
 
-            # Mark as successfully processed
+            # 标记为成功处理
             self.integrity_checker.mark_success(
                 file_hash=file_hash,
                 file_path=str(file_path),
@@ -272,20 +272,20 @@ class IngestionPipeline:
         trace: Optional[TraceContext] = None
     ) -> List[dict]:
         """
-        Ingest all files in a directory matching pattern.
+        摄取目录中所有匹配模式的文件。
 
         Args:
-            directory_path: Path to directory
-            pattern: File pattern (default: *.pdf)
-            config: Pipeline configuration
-            trace: Optional trace context
+            directory_path: 目录路径
+            pattern: 文件模式（默认: *.pdf）
+            config: 管道配置
+            trace: 可选的跟踪上下文
 
         Returns:
-            List of ingestion results for each file
+            每个文件的摄取结果列表
         """
         directory = Path(directory_path)
         if not directory.exists():
-            raise FileNotFoundError(f"Directory not found: {directory_path}")
+            raise FileNotFoundError(f"目录未找到: {directory_path}")
 
         files = list(directory.glob(pattern))
         results = []

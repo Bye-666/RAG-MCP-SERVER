@@ -1,4 +1,4 @@
-"""Cross-Encoder based reranker"""
+"""基于 Cross-Encoder 的重排序器"""
 
 from typing import Any, Dict, List, Optional
 from .base_reranker import BaseReranker
@@ -6,16 +6,16 @@ from ...core.trace import TraceContext
 
 
 class CrossEncoderReranker(BaseReranker):
-    """Cross-Encoder based reranker using sentence-transformers"""
+    """基于 Cross-Encoder 的重排序器，使用 sentence-transformers"""
 
     def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", scorer=None, timeout: Optional[float] = None):
         """
-        Initialize Cross-Encoder reranker
+        初始化 Cross-Encoder 重排序器
 
-        Args:
-            model_name: Name of the cross-encoder model
-            scorer: Optional scorer instance (for testing/mocking)
-            timeout: Optional timeout in seconds for scoring
+        参数:
+            model_name: cross-encoder 模型名称
+            scorer: 可选的评分器实例（用于测试/模拟）
+            timeout: 可选的评分超时时间（秒）
         """
         self.model_name = model_name
         self.timeout = timeout
@@ -28,8 +28,8 @@ class CrossEncoderReranker(BaseReranker):
                 self.scorer = CrossEncoder(model_name)
             except ImportError as e:
                 raise ImportError(
-                    "sentence-transformers is required for CrossEncoderReranker. "
-                    "Install it with: pip install sentence-transformers"
+                    "CrossEncoderReranker 需要 sentence-transformers。"
+                    "使用以下命令安装: pip install sentence-transformers"
                 ) from e
 
     def rerank(
@@ -39,48 +39,48 @@ class CrossEncoderReranker(BaseReranker):
         trace: Optional[TraceContext] = None
     ) -> List[Dict[str, Any]]:
         """
-        Rerank candidates using Cross-Encoder model
+        使用 Cross-Encoder 模型对候选项进行重排序
 
-        Args:
-            query: User query
-            candidates: List of candidate dicts (must have 'text' field)
-            trace: Optional trace context
+        参数:
+            query: 用户查询
+            candidates: 候选项字典列表（必须有 'text' 字段）
+            trace: 可选的跟踪上下文
 
-        Returns:
-            Reranked list of candidates with updated scores
+        返回:
+            带有更新分数的重排序候选项列表
 
-        Raises:
-            ValueError: If candidates format is invalid
-            RuntimeError: If scoring fails (allows fallback to original ranking)
-            TimeoutError: If scoring exceeds timeout (allows fallback)
+        异常:
+            ValueError: 如果候选项格式无效
+            RuntimeError: 如果评分失败（允许回退到原始排序）
+            TimeoutError: 如果评分超过超时时间（允许回退）
         """
         if not candidates:
             return []
 
         if trace:
-            trace.log("cross_encoder_reranker", f"Reranking {len(candidates)} candidates with {self.model_name}")
+            trace.log("cross_encoder_reranker", f"使用 {self.model_name} 重排序 {len(candidates)} 个候选项")
 
-        # Validate candidates have required fields
+        # 验证候选项具有必需字段
         for i, cand in enumerate(candidates):
             if 'text' not in cand:
-                raise ValueError(f"Candidate {i} missing 'text' field")
+                raise ValueError(f"候选项 {i} 缺少 'text' 字段")
 
-        # Build query-candidate pairs
+        # 构建查询-候选项对
         pairs = [[query, cand['text']] for cand in candidates]
 
-        # Score pairs
+        # 对对进行评分
         try:
             if self.timeout is not None:
-                # For timeout support, we'd need to wrap the predict call
-                # For now, we'll just pass through and let the caller handle timeout
+                # 为了支持超时，我们需要包装 predict 调用
+                # 现在，我们只是传递并让调用者处理超时
                 import signal
 
                 def timeout_handler(signum, frame):
-                    raise TimeoutError(f"Cross-encoder scoring exceeded timeout of {self.timeout}s")
+                    raise TimeoutError(f"Cross-encoder 评分超过 {self.timeout} 秒的超时时间")
 
-                # Note: signal.alarm only works on Unix systems
-                # For Windows compatibility, we'll skip the actual timeout implementation
-                # and just document the interface
+                # 注意: signal.alarm 仅在 Unix 系统上有效
+                # 为了 Windows 兼容性，我们将跳过实际的超时实现
+                # 只记录接口
                 try:
                     if hasattr(signal, 'alarm'):
                         signal.signal(signal.SIGALRM, timeout_handler)
@@ -89,32 +89,32 @@ class CrossEncoderReranker(BaseReranker):
                     scores = self.scorer.predict(pairs)
 
                     if hasattr(signal, 'alarm'):
-                        signal.alarm(0)  # Cancel alarm
+                        signal.alarm(0)  # 取消警报
                 except TimeoutError:
                     raise
             else:
                 scores = self.scorer.predict(pairs)
 
             if trace:
-                trace.log("cross_encoder_reranker", f"Scored {len(scores)} pairs")
+                trace.log("cross_encoder_reranker", f"评分了 {len(scores)} 对")
 
         except TimeoutError:
-            raise  # Re-raise timeout for fallback handling
+            raise  # 重新抛出超时以进行回退处理
         except Exception as e:
-            raise RuntimeError(f"Cross-encoder scoring failed: {str(e)}") from e
+            raise RuntimeError(f"Cross-encoder 评分失败: {str(e)}") from e
 
-        # Build reranked result with scores
+        # 构建带有分数的重排序结果
         scored_candidates = []
         for cand, score in zip(candidates, scores):
             cand_copy = cand.copy()
             cand_copy['rerank_score'] = float(score)
             scored_candidates.append(cand_copy)
 
-        # Sort by score (descending)
+        # 按分数排序（降序）
         reranked = sorted(scored_candidates, key=lambda x: x['rerank_score'], reverse=True)
 
         if trace:
             top_scores = [f"{c.get('id', 'N/A')}:{c['rerank_score']:.3f}" for c in reranked[:3]]
-            trace.log("cross_encoder_reranker", f"Top 3 scores: {top_scores}")
+            trace.log("cross_encoder_reranker", f"前 3 个分数: {top_scores}")
 
         return reranked

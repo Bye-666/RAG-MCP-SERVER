@@ -1,1 +1,1 @@
-# Ingestion module initialization
+# 数据摄取模块初始化

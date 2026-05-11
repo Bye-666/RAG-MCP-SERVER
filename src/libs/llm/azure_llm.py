@@ -4,41 +4,41 @@ from .base_llm import BaseLLM
 
 
 class AzureLLM(BaseLLM):
-    """Azure OpenAI LLM Implementation
+    """Azure OpenAI LLM 实现
 
-    Supports Azure OpenAI API with proper error handling and input validation.
+    支持 Azure OpenAI API，具有适当的错误处理和输入验证。
 
-    Attributes:
-        api_key: Azure OpenAI API key
-        azure_endpoint: Azure OpenAI endpoint URL
-        api_version: Azure OpenAI API version
-        deployment_name: Azure deployment name
-        temperature: Sampling temperature (0.0-2.0)
-        max_tokens: Maximum tokens to generate
+    属性:
+        api_key: Azure OpenAI API 密钥
+        azure_endpoint: Azure OpenAI 端点 URL
+        api_version: Azure OpenAI API 版本
+        deployment_name: Azure 部署名称
+        temperature: 采样温度（0.0-2.0）
+        max_tokens: 生成的最大 token 数
     """
 
     def __init__(self, api_key: str, azure_endpoint: str, api_version: str,
                  deployment_name: str, temperature: float = 0.7,
                  max_tokens: Optional[int] = None, **kwargs):
-        """Initialize Azure OpenAI LLM client.
+        """初始化 Azure OpenAI LLM 客户端。
 
-        Args:
-            api_key: Azure OpenAI API key
-            azure_endpoint: Azure OpenAI endpoint URL
-            api_version: Azure OpenAI API version (e.g., "2023-07-01-preview")
-            deployment_name: Azure deployment name
-            temperature: Sampling temperature (0.0-2.0, default: 0.7)
-            max_tokens: Maximum tokens to generate (optional)
-            **kwargs: Additional arguments (ignored but accepted for interface consistency)
+        参数:
+            api_key: Azure OpenAI API 密钥
+            azure_endpoint: Azure OpenAI 端点 URL
+            api_version: Azure OpenAI API 版本（例如 "2023-07-01-preview"）
+            deployment_name: Azure 部署名称
+            temperature: 采样温度（0.0-2.0，默认: 0.7）
+            max_tokens: 生成的最大 token 数（可选）
+            **kwargs: 其他参数（为接口一致性而接受但被忽略）
         """
         if not api_key:
-            raise ValueError("Azure OpenAI API key is required")
+            raise ValueError("需要 Azure OpenAI API 密钥")
         if not azure_endpoint:
-            raise ValueError("Azure OpenAI endpoint is required")
+            raise ValueError("需要 Azure OpenAI 端点")
         if not api_version:
-            raise ValueError("Azure OpenAI API version is required")
+            raise ValueError("需要 Azure OpenAI API 版本")
         if not deployment_name:
-            raise ValueError("Azure deployment name is required")
+            raise ValueError("需要 Azure 部署名称")
 
         self.client = AzureOpenAI(
             api_key=api_key,
@@ -50,29 +50,29 @@ class AzureLLM(BaseLLM):
         self.max_tokens = max_tokens
 
     def chat(self, messages: list) -> str:
-        """Send chat messages to Azure OpenAI and return the response.
+        """向 Azure OpenAI 发送聊天消息并返回响应。
 
-        Args:
-            messages: List of chat messages in OpenAI format [{"role": "user", "content": "..."}]
+        参数:
+            messages: OpenAI 格式的聊天消息列表 [{"role": "user", "content": "..."}]
 
-        Returns:
-            Model's text response
+        返回:
+            模型的文本响应
 
-        Raises:
-            RuntimeError: If API request fails with detailed error information
-            ValueError: If messages input is invalid
+        异常:
+            RuntimeError: 如果 API 请求失败，包含详细错误信息
+            ValueError: 如果消息输入无效
         """
         if not isinstance(messages, list) or len(messages) == 0:
-            raise ValueError("messages must be a non-empty list")
+            raise ValueError("messages 必须是非空列表")
 
-        # Validate message structure
+        # 验证消息结构
         for i, msg in enumerate(messages):
             if not isinstance(msg, dict):
-                raise ValueError(f"message[{i}] must be a dict, got {type(msg).__name__}")
+                raise ValueError(f"message[{i}] 必须是字典，得到 {type(msg).__name__}")
             if "role" not in msg:
-                raise ValueError(f"message[{i}] missing required 'role' field")
+                raise ValueError(f"message[{i}] 缺少必需的 'role' 字段")
             if "content" not in msg:
-                raise ValueError(f"message[{i}] missing required 'content' field")
+                raise ValueError(f"message[{i}] 缺少必需的 'content' 字段")
 
         try:
             kwargs = {
@@ -86,4 +86,4 @@ class AzureLLM(BaseLLM):
             response = self.client.chat.completions.create(**kwargs)
             return response.choices[0].message.content
         except Exception as e:
-            raise RuntimeError(f"Azure OpenAI API request failed: {str(e)}") from e
+            raise RuntimeError(f"Azure OpenAI API 请求失败: {str(e)}") from e

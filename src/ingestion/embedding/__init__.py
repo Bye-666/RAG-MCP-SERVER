@@ -1,6 +1,6 @@
-"""Embedding module for ingestion pipeline
+"""数据摄取管道的嵌入模块
 
-This module handles dense and sparse encoding of text chunks.
+该模块处理文本块的密集和稀疏编码。
 """
 
 from .dense_encoder import DenseEncoder

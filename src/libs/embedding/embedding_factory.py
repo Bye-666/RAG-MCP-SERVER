@@ -15,9 +15,9 @@ class EmbeddingFactory:
         embed_class = cls._providers.get(provider)
 
         if not embed_class:
-            raise ValueError(f"Unsupported embedding provider: {provider}")
+            raise ValueError(f"不支持的嵌入提供商: {provider}")
 
-        # 创建配置副本并移除provider字段，避免传递给构造函数
+        # 创建配置副本并移除 provider 字段，避免传递给构造函数
         embed_config = {k: v for k, v in settings['embedding'].items() if k != 'provider'}
         return embed_class(**embed_config)
 
@@ -26,19 +26,19 @@ try:
     from .openai_embedding import OpenAIEmbedding
     EmbeddingFactory.register_provider("openai", OpenAIEmbedding)
 except ImportError:
-    pass  # openai package not installed
+    pass  # openai 包未安装
 
 try:
     from .azure_embedding import AzureEmbedding
     EmbeddingFactory.register_provider("azure", AzureEmbedding)
 except ImportError:
-    pass  # azure package not installed
+    pass  # azure 包未安装
 
 try:
     from .ollama_embedding import OllamaEmbedding
     EmbeddingFactory.register_provider("ollama", OllamaEmbedding)
 except ImportError:
-    pass  # requests package not installed
+    pass  # requests 包未安装
 
 
 # Convenience function for backward compatibility

@@ -1,8 +1,8 @@
 """
-TraceContext: Minimal implementation for tracking pipeline stages.
+TraceContext: 用于追踪流水线阶段的最小实现。
 
-This is a placeholder implementation for Phase C. Will be enhanced in Phase F
-with structured logging, persistence, and detailed metrics.
+这是 Phase C 的占位符实现。将在 Phase F 中增强，
+包括结构化日志、持久化和详细指标。
 """
 
 import uuid
@@ -13,7 +13,7 @@ from datetime import datetime
 
 @dataclass
 class StageRecord:
-    """Record of a single pipeline stage execution"""
+    """单个流水线阶段执行的记录"""
     stage_name: str
     start_time: datetime
     end_time: Optional[datetime] = None
@@ -21,7 +21,7 @@ class StageRecord:
 
     @property
     def duration_ms(self) -> Optional[float]:
-        """Calculate stage duration in milliseconds"""
+        """计算阶段持续时间（毫秒）"""
         if self.end_time is None:
             return None
         delta = self.end_time - self.start_time
@@ -30,26 +30,26 @@ class StageRecord:
 
 class TraceContext:
     """
-    Minimal trace context for tracking pipeline execution.
+    用于追踪流水线执行的最小追踪上下文。
 
-    Provides:
-    - Unique trace_id generation
-    - Stage recording with timing
-    - Basic metadata storage
+    提供:
+    - 唯一 trace_id 生成
+    - 带计时的阶段记录
+    - 基本元数据存储
 
-    Phase F will add:
-    - JSON Lines persistence
-    - Structured logging
-    - Detailed metrics and waterfall visualization
+    Phase F 将添加:
+    - JSON Lines 持久化
+    - 结构化日志
+    - 详细指标和瀑布图可视化
     """
 
     def __init__(self, trace_id: Optional[str] = None, trace_type: str = "query"):
         """
-        Initialize trace context.
+        初始化追踪上下文。
 
-        Args:
-            trace_id: Optional trace ID. If not provided, generates a new UUID.
-            trace_type: Type of trace - "query" or "ingestion"
+        参数:
+            trace_id: 可选的追踪 ID。如果未提供，生成新的 UUID。
+            trace_type: 追踪类型 - "query" 或 "ingestion"
         """
         self.trace_id = trace_id or str(uuid.uuid4())
         self.trace_type = trace_type
@@ -60,14 +60,14 @@ class TraceContext:
 
     def record_stage(self, stage_name: str, metadata: Optional[Dict[str, Any]] = None) -> StageRecord:
         """
-        Record the start of a pipeline stage.
+        记录流水线阶段的开始。
 
-        Args:
-            stage_name: Name of the stage (e.g., "chunk_refiner", "dense_encoder")
-            metadata: Optional metadata for this stage
+        参数:
+            stage_name: 阶段名称（例如 "chunk_refiner"、"dense_encoder"）
+            metadata: 此阶段的可选元数据
 
-        Returns:
-            StageRecord object that can be used to mark completion
+        返回:
+            可用于标记完成的 StageRecord 对象
         """
         record = StageRecord(
             stage_name=stage_name,
@@ -79,11 +79,11 @@ class TraceContext:
 
     def finish_stage(self, record: StageRecord, metadata: Optional[Dict[str, Any]] = None):
         """
-        Mark a stage as finished.
+        标记阶段为已完成。
 
-        Args:
-            record: The StageRecord returned by record_stage
-            metadata: Optional additional metadata to merge
+        参数:
+            record: record_stage 返回的 StageRecord
+            metadata: 要合并的可选附加元数据
         """
         record.end_time = datetime.now()
         if metadata:
@@ -91,10 +91,10 @@ class TraceContext:
 
     def finish(self, metadata: Optional[Dict[str, Any]] = None):
         """
-        Mark the entire trace as finished.
+        标记整个追踪为已完成。
 
-        Args:
-            metadata: Optional metadata for the entire trace
+        参数:
+            metadata: 整个追踪的可选元数据
         """
         self.end_time = datetime.now()
         if metadata:
@@ -102,7 +102,7 @@ class TraceContext:
 
     @property
     def total_duration_ms(self) -> Optional[float]:
-        """Calculate total trace duration in milliseconds"""
+        """计算总追踪持续时间（毫秒）"""
         if self.end_time is None:
             return None
         delta = self.end_time - self.start_time
@@ -110,40 +110,40 @@ class TraceContext:
 
     def elapsed_ms(self, stage_name: Optional[str] = None) -> float:
         """
-        Get elapsed time in milliseconds.
+        获取已用时间（毫秒）。
 
-        Args:
-            stage_name: Optional stage name. If provided, returns duration of that stage.
-                       If None, returns total elapsed time.
+        参数:
+            stage_name: 可选的阶段名称。如果提供，返回该阶段的持续时间。
+                       如果为 None，返回总已用时间。
 
-        Returns:
-            Elapsed time in milliseconds, or 0 if stage not found or not finished
+        返回:
+            已用时间（毫秒），如果未找到阶段或未完成则返回 0
         """
         if stage_name is None:
-            # Return total elapsed time
+            # 返回总已用时间
             if self.end_time:
                 delta = self.end_time - self.start_time
             else:
                 delta = datetime.now() - self.start_time
             return delta.total_seconds() * 1000
 
-        # Find stage and return its duration
+        # 查找阶段并返回其持续时间
         for stage in self.stages:
             if stage.stage_name == stage_name:
                 if stage.duration_ms is not None:
                     return stage.duration_ms
-                # Stage not finished yet, calculate current elapsed
+                # 阶段尚未完成，计算当前已用时间
                 delta = datetime.now() - stage.start_time
                 return delta.total_seconds() * 1000
 
-        return 0.0  # Stage not found
+        return 0.0  # 未找到阶段
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert trace to dictionary for serialization.
+        将追踪转换为字典以便序列化。
 
-        Returns:
-            Dictionary representation of the trace with trace_type, timestamps, and stages
+        返回:
+            包含 trace_type、时间戳和阶段的追踪字典表示
         """
         return {
             "trace_id": self.trace_id,

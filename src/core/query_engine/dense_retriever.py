@@ -1,7 +1,7 @@
 """
-Dense Retriever for semantic vector search.
+用于语义向量搜索的稠密检索器。
 
-Combines embedding generation and vector store query for semantic retrieval.
+结合 embedding 生成和向量存储查询进行语义检索。
 """
 
 from typing import List, Optional, Dict, Any
@@ -15,12 +15,12 @@ from src.libs.vector_store.base_vector_store import BaseVectorStore
 
 class DenseRetriever:
     """
-    Dense retriever for semantic vector search.
+    用于语义向量搜索的稠密检索器。
 
-    Orchestrates:
-    1. Query text → embedding vector (via EmbeddingClient)
-    2. Vector → top-k similar chunks (via VectorStore)
-    3. Results → RetrievalResult list
+    编排:
+    1. 查询文本 → embedding 向量（通过 EmbeddingClient）
+    2. 向量 → top-k 相似块（通过 VectorStore）
+    3. 结果 → RetrievalResult 列表
     """
 
     def __init__(
@@ -30,16 +30,16 @@ class DenseRetriever:
         vector_store: Optional[BaseVectorStore] = None
     ):
         """
-        Initialize DenseRetriever.
+        初始化 DenseRetriever。
 
-        Args:
-            settings: Application settings
-            embedding_client: Optional embedding client (for dependency injection)
-            vector_store: Optional vector store (for dependency injection)
+        参数:
+            settings: 应用程序设置
+            embedding_client: 可选的 embedding 客户端（用于依赖注入）
+            vector_store: 可选的向量存储（用于依赖注入）
         """
         self.settings = settings
 
-        # Use injected dependencies or create from settings
+        # 使用注入的依赖或从设置创建
         if embedding_client is not None:
             self.embedding_client = embedding_client
         else:
@@ -60,26 +60,26 @@ class DenseRetriever:
         trace: Optional[TraceContext] = None
     ) -> List[RetrievalResult]:
         """
-        Retrieve top-k semantically similar chunks for query.
+        检索查询的 top-k 语义相似块。
 
-        Args:
-            query: User query string
-            top_k: Number of results to return
-            filters: Optional metadata filters
-            trace: Optional trace context
+        参数:
+            query: 用户查询字符串
+            top_k: 返回的结果数量
+            filters: 可选的元数据过滤器
+            trace: 可选的追踪上下文
 
-        Returns:
-            List of RetrievalResult sorted by relevance score (descending)
+        返回:
+            按相关性分数排序的 RetrievalResult 列表（降序）
 
-        Raises:
-            ValueError: If query is empty or top_k is invalid
+        异常:
+            ValueError: 如果查询为空或 top_k 无效
         """
         if not query or not query.strip():
-            raise ValueError("Query cannot be empty")
+            raise ValueError("查询不能为空")
         if top_k <= 0:
-            raise ValueError("top_k must be positive")
+            raise ValueError("top_k 必须为正数")
 
-        # Step 1: Generate query embedding
+        # 步骤 1: 生成查询 embedding
         if trace:
             stage = trace.record_stage("dense_retriever_embed", {"query_length": len(query)})
 
@@ -89,7 +89,7 @@ class DenseRetriever:
         if trace:
             trace.finish_stage(stage, {"vector_dim": len(query_vector)})
 
-        # Step 2: Query vector store
+        # 步骤 2: 查询向量存储
         if trace:
             stage = trace.record_stage("dense_retriever_query", {
                 "top_k": top_k,
@@ -106,7 +106,7 @@ class DenseRetriever:
         if trace:
             trace.finish_stage(stage, {"result_count": len(raw_results)})
 
-        # Step 3: Convert to RetrievalResult
+        # 步骤 3: 转换为 RetrievalResult
         results = []
         for item in raw_results:
             results.append(RetrievalResult(

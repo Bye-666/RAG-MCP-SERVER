@@ -4,7 +4,7 @@ from ...core.trace import TraceContext
 
 
 class BaseVectorStore(ABC):
-    """Abstract interface for vector store backends"""
+    """向量存储后端的抽象接口"""
 
     @abstractmethod
     def upsert(
@@ -13,8 +13,8 @@ class BaseVectorStore(ABC):
         trace: Optional[TraceContext] = None
     ) -> List[str]:
         """
-        Insert or update records in the vector store
-        Returns list of record IDs
+        在向量存储中插入或更新记录
+        返回记录 ID 列表
         """
         pass
 
@@ -27,15 +27,15 @@ class BaseVectorStore(ABC):
         trace: Optional[TraceContext] = None
     ) -> List[Dict[str, Any]]:
         """
-        Query the vector store with a vector
-        Returns list of results with id, score, text, metadata
+        使用向量查询向量存储
+        返回包含 id、score、text、metadata 的结果列表
         """
         pass
 
     @abstractmethod
     def get_by_ids(self, ids: List[str]) -> List[Dict[str, Any]]:
         """
-        Retrieve records by their IDs
-        Returns list of records with id, text, metadata
+        通过 ID 检索记录
+        返回包含 id、text、metadata 的记录列表
         """
         pass

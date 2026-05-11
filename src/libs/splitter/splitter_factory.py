@@ -15,7 +15,7 @@ class SplitterFactory:
         splitter_class = cls._providers.get(provider)
 
         if not splitter_class:
-            raise ValueError(f"Unsupported Splitter provider: {provider}")
+            raise ValueError(f"不支持的分割器提供商: {provider}")
 
         return splitter_class(**settings['splitter'])
 
@@ -25,4 +25,4 @@ try:
     from .recursive_splitter import RecursiveSplitter
     SplitterFactory.register_provider("recursive", RecursiveSplitter)
 except ImportError:
-    pass  # langchain-text-splitters not installed
+    pass  # langchain-text-splitters 未安装

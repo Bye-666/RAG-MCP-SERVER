@@ -7,7 +7,7 @@ from ...core.trace import TraceContext
 
 
 class ChromaStore(BaseVectorStore):
-    """ChromaDB vector store implementation with local persistence."""
+    """ChromaDB 向量存储实现，支持本地持久化。"""
 
     def __init__(
         self,
@@ -16,22 +16,22 @@ class ChromaStore(BaseVectorStore):
         persist_directory: str = "data/db/chroma",
         **kwargs
     ):
-        """Initialize ChromaDB client with persistence.
+        """初始化 ChromaDB 客户端并启用持久化。
 
-        Args:
-            provider: Provider name (for factory compatibility)
-            collection_name: Name of the collection to use
-            persist_directory: Directory for persistent storage
-            **kwargs: Additional arguments (ignored but accepted for interface consistency)
+        参数:
+            provider: 提供商名称（用于工厂兼容性）
+            collection_name: 要使用的集合名称
+            persist_directory: 持久化存储目录
+            **kwargs: 其他参数（为接口一致性而接受但被忽略）
         """
         self.provider = provider
         self.collection_name = collection_name
         self.persist_directory = persist_directory
 
-        # Create persist directory if it doesn't exist
+        # 如果持久化目录不存在则创建
         os.makedirs(persist_directory, exist_ok=True)
 
-        # Initialize ChromaDB client with persistence
+        # 初始化 ChromaDB 客户端并启用持久化
         self.client = chromadb.PersistentClient(
             path=persist_directory,
             settings=Settings(
@@ -40,7 +40,7 @@ class ChromaStore(BaseVectorStore):
             )
         )
 
-        # Get or create collection
+        # 获取或创建集合
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"}
@@ -51,17 +51,17 @@ class ChromaStore(BaseVectorStore):
         records: List[Dict[str, Any]],
         trace: Optional[TraceContext] = None
     ) -> List[str]:
-        """Insert or update records in ChromaDB.
+        """在 ChromaDB 中插入或更新记录。
 
-        Args:
-            records: List of records with 'id', 'vector', 'text', and optional 'metadata'
-            trace: Optional trace context for logging
+        参数:
+            records: 记录列表，包含 'id'、'vector'、'text' 和可选的 'metadata'
+            trace: 可选的跟踪上下文用于日志记录
 
-        Returns:
-            List of record IDs that were upserted
+        返回:
+            已插入或更新的记录 ID 列表
 
-        Raises:
-            ValueError: If records are invalid or missing required fields
+        异常:
+            ValueError: 如果记录无效或缺少必需字段
         """
         if not records:
             return []
@@ -73,24 +73,24 @@ class ChromaStore(BaseVectorStore):
 
         for i, record in enumerate(records):
             if not isinstance(record, dict):
-                raise ValueError(f"Record {i} must be a dict, got {type(record).__name__}")
+                raise ValueError(f"记录 {i} 必须是字典，得到 {type(record).__name__}")
 
             if "id" not in record:
-                raise ValueError(f"Record {i} missing required 'id' field")
+                raise ValueError(f"记录 {i} 缺少必需的 'id' 字段")
             if "vector" not in record:
-                raise ValueError(f"Record {i} missing required 'vector' field")
+                raise ValueError(f"记录 {i} 缺少必需的 'vector' 字段")
             if "text" not in record:
-                raise ValueError(f"Record {i} missing required 'text' field")
+                raise ValueError(f"记录 {i} 缺少必需的 'text' 字段")
 
             ids.append(str(record["id"]))
             embeddings.append(record["vector"])
             documents.append(record["text"])
 
-            # ChromaDB doesn't accept empty metadata dicts, use None instead
+            # ChromaDB 不接受空元数据字典，使用 None 代替
             metadata = record.get("metadata", {})
             metadatas.append(metadata if metadata else None)
 
-        # Upsert to ChromaDB
+        # 插入或更新到 ChromaDB
         self.collection.upsert(
             ids=ids,
             embeddings=embeddings,
@@ -114,25 +114,25 @@ class ChromaStore(BaseVectorStore):
         filters: Optional[Dict[str, Any]] = None,
         trace: Optional[TraceContext] = None
     ) -> List[Dict[str, Any]]:
-        """Query ChromaDB with a vector.
+        """使用向量查询 ChromaDB。
 
-        Args:
-            vector: Query vector
-            top_k: Number of results to return
-            filters: Optional metadata filters (ChromaDB where clause)
-            trace: Optional trace context for logging
+        参数:
+            vector: 查询向量
+            top_k: 返回的结果数量
+            filters: 可选的元数据过滤器（ChromaDB where 子句）
+            trace: 可选的跟踪上下文用于日志记录
 
-        Returns:
-            List of results with 'id', 'score', 'text', and 'metadata'
+        返回:
+            包含 'id'、'score'、'text' 和 'metadata' 的结果列表
         """
         if not isinstance(vector, list):
-            raise TypeError("vector must be a list")
+            raise TypeError("vector 必须是列表")
         if not vector:
-            raise ValueError("vector cannot be empty")
+            raise ValueError("vector 不能为空")
         if top_k <= 0:
-            raise ValueError("top_k must be positive")
+            raise ValueError("top_k 必须为正数")
 
-        # Query ChromaDB
+        # 查询 ChromaDB
         results = self.collection.query(
             query_embeddings=[vector],
             n_results=top_k,
@@ -140,13 +140,13 @@ class ChromaStore(BaseVectorStore):
             include=["documents", "metadatas", "distances"]
         )
 
-        # Format results
+        # 格式化结果
         formatted_results = []
         if results["ids"] and results["ids"][0]:
             for i in range(len(results["ids"][0])):
                 formatted_results.append({
                     "id": results["ids"][0][i],
-                    "score": 1.0 - results["distances"][0][i],  # Convert distance to similarity
+                    "score": 1.0 - results["distances"][0][i],  # 将距离转换为相似度
                     "text": results["documents"][0][i],
                     "metadata": results["metadatas"][0][i] if results["metadatas"] else {}
                 })
@@ -163,13 +163,13 @@ class ChromaStore(BaseVectorStore):
         return formatted_results
 
     def get_by_ids(self, ids: List[str]) -> List[Dict[str, Any]]:
-        """Retrieve records by their IDs.
+        """通过 ID 检索记录。
 
-        Args:
-            ids: List of record IDs to retrieve
+        参数:
+            ids: 要检索的记录 ID 列表
 
-        Returns:
-            List of records with 'id', 'text', and 'metadata'
+        返回:
+            包含 'id'、'text' 和 'metadata' 的记录列表
         """
         if not ids:
             return []
@@ -191,29 +191,29 @@ class ChromaStore(BaseVectorStore):
         return formatted_results
 
     def delete_collection(self):
-        """Delete the entire collection. Useful for testing cleanup."""
+        """删除整个集合。用于测试清理。"""
         try:
             self.client.delete_collection(name=self.collection_name)
         except Exception:
-            pass  # Collection might not exist
+            pass  # 集合可能不存在
 
     def count(self) -> int:
-        """Get the number of records in the collection."""
+        """获取集合中的记录数量。"""
         return self.collection.count()
 
     def delete_by_metadata(self, filters: Dict[str, Any]) -> int:
-        """Delete records matching metadata filters.
+        """删除匹配元数据过滤器的记录。
 
-        Args:
-            filters: Metadata filters (ChromaDB where clause)
+        参数:
+            filters: 元数据过滤器（ChromaDB where 子句）
 
-        Returns:
-            Number of records deleted
+        返回:
+            删除的记录数量
         """
         if not filters:
             return 0
 
-        # Get IDs matching the filter
+        # 获取匹配过滤器的 ID
         results = self.collection.get(
             where=filters,
             include=[]
@@ -222,19 +222,19 @@ class ChromaStore(BaseVectorStore):
         if not results["ids"]:
             return 0
 
-        # Delete the matching records
+        # 删除匹配的记录
         self.collection.delete(ids=results["ids"])
 
         return len(results["ids"])
 
     def get_by_metadata(self, filters: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Retrieve records by metadata filters.
+        """通过元数据过滤器检索记录。
 
-        Args:
-            filters: Metadata filters (ChromaDB where clause)
+        参数:
+            filters: 元数据过滤器（ChromaDB where 子句）
 
-        Returns:
-            List of records with 'id', 'text', and 'metadata'
+        返回:
+            包含 'id'、'text' 和 'metadata' 的记录列表
         """
         if not filters:
             return []

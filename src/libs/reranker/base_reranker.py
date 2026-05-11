@@ -4,7 +4,7 @@ from ...core.trace import TraceContext
 
 
 class BaseReranker(ABC):
-    """Abstract interface for reranker backends"""
+    """重排序器后端的抽象接口"""
 
     @abstractmethod
     def rerank(
@@ -14,7 +14,7 @@ class BaseReranker(ABC):
         trace: Optional[TraceContext] = None
     ) -> List[Dict[str, Any]]:
         """
-        Rerank candidates based on relevance to query
-        Returns sorted list of candidates with updated scores
+        根据与查询的相关性对候选项进行重排序
+        返回带有更新分数的已排序候选项列表
         """
         pass

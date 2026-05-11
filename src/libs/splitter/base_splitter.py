@@ -10,6 +10,6 @@ class BaseSplitter(ABC):
         trace: Optional[TraceContext] = None
     ) -> List[str]:
         """
-        Splits input text into chunks
+        将输入文本分割为块
         """
         pass

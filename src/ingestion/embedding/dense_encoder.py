@@ -1,7 +1,7 @@
-"""Dense vector encoder for text chunks
+"""文本块的密集向量编码器
 
-This module provides the DenseEncoder class that converts text chunks into
-dense embedding vectors using the configured embedding provider.
+该模块提供 DenseEncoder 类，使用配置的嵌入提供程序将文本块
+转换为密集嵌入向量。
 """
 
 from typing import List, Optional
@@ -11,24 +11,23 @@ from src.core.trace import TraceContext
 
 
 class DenseEncoder:
-    """Encodes text chunks into dense embedding vectors
+    """将文本块编码为密集嵌入向量
 
-    This encoder takes a list of Chunk objects and produces ChunkRecord objects
-    with dense_vector populated. It delegates the actual embedding computation
-    to a BaseEmbedding implementation (e.g., OpenAI, Azure, Ollama).
+    该编码器接收 Chunk 对象列表，生成填充了 dense_vector 的 ChunkRecord 对象。
+    它将实际的嵌入计算委托给 BaseEmbedding 实现（例如 OpenAI、Azure、Ollama）。
 
     Attributes:
-        embedding_model: The embedding provider instance
+        embedding_model: 嵌入提供程序实例
     """
 
     def __init__(self, embedding_model: BaseEmbedding):
-        """Initialize the dense encoder
+        """初始化密集编码器
 
         Args:
-            embedding_model: An instance of BaseEmbedding for computing embeddings
+            embedding_model: 用于计算嵌入的 BaseEmbedding 实例
         """
         if not isinstance(embedding_model, BaseEmbedding):
-            raise TypeError("embedding_model must be an instance of BaseEmbedding")
+            raise TypeError("embedding_model 必须是 BaseEmbedding 的实例")
         self.embedding_model = embedding_model
 
     def encode(
@@ -36,35 +35,35 @@ class DenseEncoder:
         chunks: List[Chunk],
         trace: Optional[TraceContext] = None
     ) -> List[ChunkRecord]:
-        """Encode chunks into dense vectors
+        """将块编码为密集向量
 
         Args:
-            chunks: List of Chunk objects to encode
-            trace: Optional trace context for observability
+            chunks: 要编码的 Chunk 对象列表
+            trace: 可选的跟踪上下文，用于可观测性
 
         Returns:
-            List of ChunkRecord objects with dense_vector populated
+            填充了 dense_vector 的 ChunkRecord 对象列表
 
         Raises:
-            ValueError: If chunks list is empty
+            ValueError: 如果块列表为空
         """
         if not chunks:
-            raise ValueError("chunks list cannot be empty")
+            raise ValueError("块列表不能为空")
 
-        # Extract text from all chunks
+        # 从所有块中提取文本
         texts = [chunk.text for chunk in chunks]
 
-        # Call embedding model to get vectors
+        # 调用嵌入模型获取向量
         vectors = self.embedding_model.embed(texts, trace=trace)
 
-        # Validate output dimensions
+        # 验证输出维度
         if len(vectors) != len(chunks):
             raise RuntimeError(
-                f"Embedding model returned {len(vectors)} vectors "
-                f"but expected {len(chunks)}"
+                f"嵌入模型返回了 {len(vectors)} 个向量，"
+                f"但期望 {len(chunks)} 个"
             )
 
-        # Create ChunkRecord objects with dense vectors
+        # 创建带有密集向量的 ChunkRecord 对象
         records = []
         for chunk, vector in zip(chunks, vectors):
             record = ChunkRecord.from_chunk(

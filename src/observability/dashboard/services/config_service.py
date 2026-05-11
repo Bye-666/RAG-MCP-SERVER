@@ -1,7 +1,7 @@
 """
-Configuration service for Dashboard.
+Dashboard 配置服务。
 
-Reads and formats system configuration for display.
+读取并格式化系统配置以供显示。
 """
 
 from typing import Dict, Any
@@ -10,19 +10,19 @@ from src.core.settings import Settings
 
 
 class ConfigService:
-    """Service for reading and formatting system configuration"""
+    """读取和格式化系统配置的服务"""
 
     def __init__(self, settings: Settings):
         """
-        Initialize config service.
+        初始化配置服务。
 
         Args:
-            settings: System settings instance
+            settings: 系统设置实例
         """
         self.settings = settings
 
     def get_llm_config(self) -> Dict[str, Any]:
-        """Get LLM configuration"""
+        """获取 LLM 配置"""
         llm = self.settings.llm
         return {
             "provider": llm.get("provider", "N/A"),
@@ -33,7 +33,7 @@ class ConfigService:
         }
 
     def get_embedding_config(self) -> Dict[str, Any]:
-        """Get embedding configuration"""
+        """获取嵌入配置"""
         emb = self.settings.embedding
         return {
             "provider": emb.get("provider", "N/A"),
@@ -43,7 +43,7 @@ class ConfigService:
         }
 
     def get_splitter_config(self) -> Dict[str, Any]:
-        """Get splitter configuration"""
+        """获取分块器配置"""
         splitter = self.settings.splitter.get("splitter", {}) if self.settings.splitter else {}
         return {
             "type": splitter.get("provider", "recursive"),
@@ -52,7 +52,7 @@ class ConfigService:
         }
 
     def get_vector_store_config(self) -> Dict[str, Any]:
-        """Get vector store configuration"""
+        """获取向量存储配置"""
         vs = self.settings.vector_store
         return {
             "provider": vs.get("provider", "N/A"),
@@ -61,8 +61,8 @@ class ConfigService:
         }
 
     def get_reranker_config(self) -> Dict[str, Any]:
-        """Get reranker configuration"""
-        # Reranker config might be in retrieval section or separate
+        """获取重排序器配置"""
+        # 重排序器配置可能在 retrieval 部分或单独配置
         reranker = self.settings.retrieval.get("reranker", {})
         if not reranker or not reranker.get("enabled", False):
             return {"enabled": False}
@@ -75,7 +75,7 @@ class ConfigService:
         }
 
     def get_retrieval_config(self) -> Dict[str, Any]:
-        """Get retrieval configuration"""
+        """获取检索配置"""
         ret = self.settings.retrieval
         return {
             "dense_top_k": ret.get("dense_top_k", ret.get("top_k", 5)),
@@ -85,7 +85,7 @@ class ConfigService:
         }
 
     def get_all_configs(self) -> Dict[str, Dict[str, Any]]:
-        """Get all system configurations"""
+        """获取所有系统配置"""
         return {
             "llm": self.get_llm_config(),
             "embedding": self.get_embedding_config(),

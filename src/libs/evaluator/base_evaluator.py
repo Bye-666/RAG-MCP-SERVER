@@ -4,7 +4,7 @@ from ...core.trace import TraceContext
 
 
 class BaseEvaluator(ABC):
-    """Abstract interface for evaluators"""
+    """评估器的抽象接口"""
 
     @abstractmethod
     def evaluate(
@@ -15,7 +15,7 @@ class BaseEvaluator(ABC):
         trace: Optional[TraceContext] = None
     ) -> Dict[str, float]:
         """
-        Evaluate retrieval results against golden standard
-        Returns dict of metric_name -> score
+        根据黄金标准评估检索结果
+        返回 metric_name -> score 的字典
         """
         pass

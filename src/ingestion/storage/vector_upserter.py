@@ -1,7 +1,7 @@
-"""Vector upserter for persisting chunk embeddings to vector store
+"""用于将块嵌入持久化到向量存储的向量上传器
 
-This module provides the VectorUpserter class that generates stable chunk IDs
-and writes chunk records with embeddings to a vector store backend.
+该模块提供 VectorUpserter 类，生成稳定的块 ID
+并将带有嵌入的块记录写入向量存储后端。
 """
 
 import hashlib
@@ -12,62 +12,62 @@ from src.core.trace import TraceContext
 
 
 class VectorUpserter:
-    """Upserts chunk records with embeddings to vector store
+    """将带有嵌入的块记录上传到向量存储
 
-    This upserter generates deterministic chunk IDs based on content and
-    metadata, then writes records to a vector store backend with idempotent
-    behavior (same content produces same ID).
+    该上传器基于内容和元数据生成确定性块 ID，
+    然后将记录写入向量存储后端，具有幂等行为
+    （相同内容产生相同 ID）。
 
     Attributes:
-        vector_store: The vector store backend instance
+        vector_store: 向量存储后端实例
     """
 
     def __init__(self, vector_store: BaseVectorStore):
-        """Initialize the vector upserter
+        """初始化向量上传器
 
         Args:
-            vector_store: An instance of BaseVectorStore for storage
+            vector_store: 用于存储的 BaseVectorStore 实例
 
         Raises:
-            TypeError: If vector_store is not a BaseVectorStore instance
+            TypeError: 如果 vector_store 不是 BaseVectorStore 实例
         """
         if not isinstance(vector_store, BaseVectorStore):
-            raise TypeError("vector_store must be an instance of BaseVectorStore")
+            raise TypeError("vector_store 必须是 BaseVectorStore 的实例")
         self.vector_store = vector_store
 
     def _generate_chunk_id(self, record: ChunkRecord) -> str:
-        """Generate deterministic chunk ID
+        """生成确定性块 ID
 
-        The ID is generated as: hash(source_path + chunk_index + content_hash[:8])
-        This ensures:
-        - Same content in same location = same ID (idempotent)
-        - Content changes = different ID
-        - Different locations = different ID
+        ID 生成为: hash(source_path + chunk_index + content_hash[:8])
+        这确保：
+        - 相同位置的相同内容 = 相同 ID（幂等）
+        - 内容更改 = 不同 ID
+        - 不同位置 = 不同 ID
 
         Args:
-            record: ChunkRecord to generate ID for
+            record: 要生成 ID 的 ChunkRecord
 
         Returns:
-            Deterministic chunk ID string
+            确定性块 ID 字符串
         """
-        # Extract source path from metadata
+        # 从元数据中提取源路径
         source_path = record.metadata.get('source_path', '')
 
-        # Extract chunk index from existing ID if available
-        # Assuming ID format: {doc_id}_{index:04d}_{hash}
+        # 如果可用，从现有 ID 中提取块索引
+        # 假设 ID 格式: {doc_id}_{index:04d}_{hash}
         chunk_index = ''
         if record.id:
             parts = record.id.split('_')
             if len(parts) >= 2:
                 chunk_index = parts[1]
 
-        # Generate content hash
+        # 生成内容哈希
         content_hash = hashlib.sha256(record.text.encode('utf-8')).hexdigest()[:8]
 
-        # Combine components
+        # 组合组件
         id_components = f"{source_path}_{chunk_index}_{content_hash}"
 
-        # Generate final ID hash
+        # 生成最终 ID 哈希
         final_id = hashlib.sha256(id_components.encode('utf-8')).hexdigest()[:16]
 
         return final_id
@@ -77,37 +77,37 @@ class VectorUpserter:
         records: List[ChunkRecord],
         trace: Optional[TraceContext] = None
     ) -> List[str]:
-        """Upsert chunk records to vector store
+        """将块记录上传到向量存储
 
         Args:
-            records: List of ChunkRecord objects with dense_vector populated
-            trace: Optional trace context for observability
+            records: 填充了 dense_vector 的 ChunkRecord 对象列表
+            trace: 可选的跟踪上下文，用于可观测性
 
         Returns:
-            List of chunk IDs that were upserted
+            已上传的块 ID 列表
 
         Raises:
-            ValueError: If records list is empty or dense vectors are missing
+            ValueError: 如果记录列表为空或缺少密集向量
         """
         if not records:
-            raise ValueError("records list cannot be empty")
+            raise ValueError("记录列表不能为空")
 
-        # Verify all records have dense vectors
+        # 验证所有记录都有密集向量
         for record in records:
             if record.dense_vector is None:
-                raise ValueError(f"Record {record.id} missing dense_vector")
+                raise ValueError(f"记录 {record.id} 缺少 dense_vector")
 
-        # Generate stable IDs and prepare records for vector store
+        # 生成稳定 ID 并为向量存储准备记录
         upsert_records = []
         generated_ids = []
 
         for record in records:
-            # Generate deterministic ID
+            # 生成确定性 ID
             chunk_id = self._generate_chunk_id(record)
             generated_ids.append(chunk_id)
 
-            # Prepare record for vector store
-            # Vector stores expect dict format with specific fields
+            # 为向量存储准备记录
+            # 向量存储期望具有特定字段的字典格式
             store_record = {
                 'id': chunk_id,
                 'vector': record.dense_vector,
@@ -115,24 +115,24 @@ class VectorUpserter:
                 'metadata': record.metadata.copy()
             }
 
-            # Clean metadata: remove empty lists (some vector stores don't allow them)
+            # 清理元数据: 删除空列表（某些向量存储不允许它们）
             cleaned_metadata = {}
             for key, value in store_record['metadata'].items():
                 if isinstance(value, list) and len(value) == 0:
-                    # Skip empty lists
+                    # 跳过空列表
                     continue
                 if isinstance(value, dict):
-                    # Skip dict values (e.g., sparse_vector should not be in metadata)
+                    # 跳过字典值（例如，sparse_vector 不应在元数据中）
                     continue
                 cleaned_metadata[key] = value
             store_record['metadata'] = cleaned_metadata
 
-            # Note: sparse_vector is NOT stored in vector store metadata
-            # It's stored separately in BM25 index by the pipeline
+            # 注意: sparse_vector 不存储在向量存储元数据中
+            # 它由管道单独存储在 BM25 索引中
 
             upsert_records.append(store_record)
 
-        # Call vector store upsert
+        # 调用向量存储上传
         self.vector_store.upsert(upsert_records, trace=trace)
 
         return generated_ids
@@ -142,16 +142,16 @@ class VectorUpserter:
         record: ChunkRecord,
         trace: Optional[TraceContext] = None
     ) -> str:
-        """Upsert a single chunk record
+        """上传单个块记录
 
-        Convenience method for upserting a single record.
+        上传单个记录的便捷方法。
 
         Args:
-            record: ChunkRecord to upsert
-            trace: Optional trace context
+            record: 要上传的 ChunkRecord
+            trace: 可选的跟踪上下文
 
         Returns:
-            The generated chunk ID
+            生成的块 ID
         """
         ids = self.upsert([record], trace=trace)
         return ids[0]

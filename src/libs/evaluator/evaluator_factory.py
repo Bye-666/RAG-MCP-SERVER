@@ -15,7 +15,7 @@ class EvaluatorFactory:
         evaluator_class = cls._providers.get(provider)
 
         if not evaluator_class:
-            raise ValueError(f"Unsupported Evaluator provider: {provider}")
+            raise ValueError(f"不支持的评估器提供商: {provider}")
 
         return evaluator_class()
 

@@ -1,4 +1,4 @@
-"""Response building and formatting components."""
+"""响应构建和格式化组件。"""
 
 from .citation_generator import CitationGenerator, Citation
 from .response_builder import ResponseBuilder, MCPResponse

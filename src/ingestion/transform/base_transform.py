@@ -1,7 +1,7 @@
 """
-BaseTransform: Abstract base class for chunk transformation operations.
+BaseTransform: 块转换操作的抽象基类。
 
-All transform operations in the ingestion pipeline should inherit from this class.
+数据摄取管道中的所有转换操作都应继承此类。
 """
 
 from abc import ABC, abstractmethod
@@ -13,35 +13,34 @@ from src.core.trace import TraceContext
 
 class BaseTransform(ABC):
     """
-    Abstract base class for chunk transformations.
+    块转换的抽象基类。
 
-    Transform operations modify chunks during the ingestion pipeline,
-    such as:
-    - ChunkRefiner: Clean and refine chunk text
-    - MetadataEnricher: Add metadata like title, summary, tags
-    - ImageCaptioner: Generate captions for images
+    转换操作在数据摄取管道期间修改块，例如：
+    - ChunkRefiner: 清理和精炼块文本
+    - MetadataEnricher: 添加元数据，如标题、摘要、标签
+    - ImageCaptioner: 为图像生成标题
 
-    All transforms should:
-    1. Accept a list of chunks and optional trace context
-    2. Return a modified list of chunks
-    3. Handle errors gracefully without blocking the pipeline
-    4. Record their operations in the trace context
+    所有转换应该：
+    1. 接受块列表和可选的跟踪上下文
+    2. 返回修改后的块列表
+    3. 优雅地处理错误，不阻塞管道
+    4. 在跟踪上下文中记录其操作
     """
 
     @abstractmethod
     def transform(self, chunks: List[Chunk], trace: Optional[TraceContext] = None) -> List[Chunk]:
         """
-        Transform a list of chunks.
+        转换块列表。
 
         Args:
-            chunks: List of Chunk objects to transform
-            trace: Optional trace context for recording operations
+            chunks: 要转换的 Chunk 对象列表
+            trace: 可选的跟踪上下文，用于记录操作
 
         Returns:
-            List of transformed Chunk objects
+            转换后的 Chunk 对象列表
 
         Raises:
-            Should not raise exceptions that block the pipeline.
-            Errors should be logged and handled gracefully.
+            不应引发阻塞管道的异常。
+            错误应被记录并优雅处理。
         """
         pass

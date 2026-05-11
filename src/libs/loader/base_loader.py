@@ -1,5 +1,5 @@
 """
-Base Loader abstract interface.
+基础加载器抽象接口。
 """
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -10,28 +10,28 @@ from src.core.types import Document
 
 class BaseLoader(ABC):
     """
-    Abstract base class for document loaders.
+    文档加载器的抽象基类。
 
-    Loaders are responsible for:
-    1. Reading files from disk
-    2. Extracting text content
-    3. Extracting images (if applicable)
-    4. Creating Document objects with proper metadata
+    加载器负责:
+    1. 从磁盘读取文件
+    2. 提取文本内容
+    3. 提取图像（如果适用）
+    4. 创建带有适当元数据的 Document 对象
     """
 
     @abstractmethod
     def load(self, path: Union[str, Path]) -> Document:
         """
-        Load a document from the given file path.
+        从给定的文件路径加载文档。
 
-        Args:
-            path: Path to the file to load
+        参数:
+            path: 要加载的文件路径
 
-        Returns:
-            Document object with extracted content and metadata
+        返回:
+            包含提取内容和元数据的 Document 对象
 
-        Raises:
-            FileNotFoundError: If the file does not exist
-            Exception: If the file cannot be parsed
+        异常:
+            FileNotFoundError: 如果文件不存在
+            Exception: 如果文件无法解析
         """
         pass

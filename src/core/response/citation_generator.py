@@ -1,4 +1,4 @@
-"""Citation generator for retrieval results."""
+"""检索结果的引用生成器。"""
 
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -6,7 +6,7 @@ from typing import List, Dict, Any
 
 @dataclass
 class Citation:
-    """Citation information for a retrieval result."""
+    """检索结果的引用信息。"""
     chunk_id: str
     source: str
     page: int
@@ -15,7 +15,7 @@ class Citation:
     snippet: str
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert citation to dictionary."""
+        """将引用转换为字典。"""
         return {
             'chunk_id': self.chunk_id,
             'source': self.source,
@@ -27,37 +27,37 @@ class Citation:
 
 
 class CitationGenerator:
-    """Generates citation information from retrieval results."""
+    """从检索结果生成引用信息。"""
 
     def __init__(self, snippet_length: int = 150):
         """
-        Initialize citation generator.
+        初始化引用生成器。
 
-        Args:
-            snippet_length: Maximum length of text snippet in citation
+        参数:
+            snippet_length: 引用中文本片段的最大长度
         """
         self.snippet_length = snippet_length
 
     def generate(self, retrieval_results: List[Dict[str, Any]]) -> List[Citation]:
         """
-        Generate citations from retrieval results.
+        从检索结果生成引用。
 
-        Args:
-            retrieval_results: List of retrieval results with chunk_id, score, text, metadata
+        参数:
+            retrieval_results: 包含 chunk_id、score、text、metadata 的检索结果列表
 
-        Returns:
-            List of Citation objects with source, page, title, etc.
+        返回:
+            包含 source、page、title 等的 Citation 对象列表
         """
         citations = []
 
         for result in retrieval_results:
-            # Extract metadata
+            # 提取元数据
             metadata = result.get('metadata', {})
             source = metadata.get('source', 'Unknown')
             page = metadata.get('page', 0)
             title = metadata.get('title', 'Untitled')
 
-            # Create text snippet
+            # 创建文本片段
             text = result.get('text', '')
             snippet = self._create_snippet(text)
 
@@ -74,7 +74,7 @@ class CitationGenerator:
         return citations
 
     def _create_snippet(self, text: str) -> str:
-        """Create a text snippet with ellipsis if needed."""
+        """如果需要，创建带省略号的文本片段。"""
         if len(text) <= self.snippet_length:
             return text
         return text[:self.snippet_length].rsplit(' ', 1)[0] + '...'

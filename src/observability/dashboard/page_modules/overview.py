@@ -1,7 +1,7 @@
 """
-System Overview page for Dashboard.
+Dashboard 系统总览页面。
 
-Displays system configuration and component status.
+显示系统配置和组件状态。
 """
 
 import streamlit as st
@@ -12,15 +12,15 @@ from src.observability.dashboard.services.config_service import ConfigService
 
 
 def render():
-    """Render the system overview page"""
+    """渲染系统总览页面"""
     st.title("🏠 系统总览")
     st.markdown("---")
 
-    # Load settings
+    # 加载设置
     settings = load_settings()
     config_service = ConfigService(settings)
 
-    # System Info
+    # 系统信息
     st.header("📊 系统信息")
     col1, col2 = st.columns(2)
 
@@ -36,10 +36,10 @@ def render():
 
     st.markdown("---")
 
-    # Component Configurations
+    # 组件配置
     st.header("⚙️ 组件配置")
 
-    # LLM Config
+    # LLM 配置
     with st.expander("🤖 LLM 配置", expanded=True):
         llm_config = config_service.get_llm_config()
         col1, col2 = st.columns(2)

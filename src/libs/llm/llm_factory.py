@@ -17,11 +17,11 @@ class LLMFactory:
 
     @classmethod
     def register_vision_provider(cls, name: str, vision_llm_class: Type[BaseVisionLLM]):
-        """Register a Vision LLM provider
+        """注册 Vision LLM 提供商
 
-        Args:
-            name: Provider name (e.g., "azure", "openai")
-            vision_llm_class: Vision LLM class implementing BaseVisionLLM
+        参数:
+            name: 提供商名称（例如 "azure"、"openai"）
+            vision_llm_class: 实现 BaseVisionLLM 的 Vision LLM 类
         """
         cls._vision_providers[name] = vision_llm_class
 
@@ -31,27 +31,27 @@ class LLMFactory:
         llm_class = cls._providers.get(provider)
 
         if not llm_class:
-            raise ValueError(f"Unsupported LLM provider: {provider}")
+            raise ValueError(f"不支持的 LLM 提供商: {provider}")
 
         return llm_class(**settings['llm'])
 
     @classmethod
     def create_vision_llm(cls, settings: dict) -> BaseVisionLLM:
-        """Create a Vision LLM instance from settings
+        """从配置创建 Vision LLM 实例
 
-        Args:
-            settings: Configuration dict with 'vision_llm' key containing:
-                - provider: Vision LLM provider name (e.g., "azure", "openai")
-                - Additional provider-specific parameters
+        参数:
+            settings: 包含 'vision_llm' 键的配置字典，其中包含:
+                - provider: Vision LLM 提供商名称（例如 "azure"、"openai"）
+                - 其他提供商特定参数
 
-        Returns:
-            BaseVisionLLM instance
+        返回:
+            BaseVisionLLM 实例
 
-        Raises:
-            ValueError: If provider is not supported or settings are invalid
-            KeyError: If 'vision_llm' key is missing from settings
+        异常:
+            ValueError: 如果提供商不受支持或配置无效
+            KeyError: 如果配置中缺少 'vision_llm' 键
 
-        Example:
+        示例:
             settings = {
                 "vision_llm": {
                     "provider": "azure",
@@ -64,18 +64,18 @@ class LLMFactory:
             vision_llm = LLMFactory.create_vision_llm(settings)
         """
         if 'vision_llm' not in settings:
-            raise KeyError("Settings must contain 'vision_llm' key")
+            raise KeyError("配置必须包含 'vision_llm' 键")
 
         provider = settings['vision_llm'].get('provider')
         if not provider:
-            raise ValueError("Vision LLM provider not specified in settings")
+            raise ValueError("配置中未指定 Vision LLM 提供商")
 
         vision_llm_class = cls._vision_providers.get(provider)
 
         if not vision_llm_class:
             raise ValueError(
-                f"Unsupported Vision LLM provider: {provider}. "
-                f"Available providers: {list(cls._vision_providers.keys())}"
+                f"不支持的 Vision LLM 提供商: {provider}。"
+                f"可用的提供商: {list(cls._vision_providers.keys())}"
             )
 
         return vision_llm_class(**settings['vision_llm'])
@@ -91,4 +91,4 @@ try:
     from .azure_vision_llm import AzureVisionLLM
     LLMFactory.register_vision_provider("azure", AzureVisionLLM)
 except ImportError:
-    pass  # Azure Vision dependencies not available
+    pass  # Azure Vision 依赖不可用

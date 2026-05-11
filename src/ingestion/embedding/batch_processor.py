@@ -1,7 +1,7 @@
-"""Batch processor for encoding chunks in batches
+"""批量编码块的批处理器
 
-This module provides the BatchProcessor class that orchestrates batch-wise
-encoding of chunks using both dense and sparse encoders.
+该模块提供 BatchProcessor 类，使用密集和稀疏编码器
+协调块的批量编码。
 """
 
 from typing import List, Optional
@@ -13,16 +13,16 @@ from src.ingestion.embedding.sparse_encoder import SparseEncoder
 
 
 class BatchProcessor:
-    """Processes chunks in batches through dense and sparse encoders
+    """通过密集和稀疏编码器批量处理块
 
-    This processor takes a list of chunks, splits them into batches,
-    and processes each batch through both dense and sparse encoders.
-    It records timing information for observability.
+    该处理器接收块列表，将它们分成批次，
+    并通过密集和稀疏编码器处理每个批次。
+    它记录时间信息以便观测。
 
     Attributes:
-        dense_encoder: Optional dense encoder for generating dense vectors
-        sparse_encoder: Optional sparse encoder for generating sparse vectors
-        batch_size: Number of chunks to process in each batch
+        dense_encoder: 用于生成密集向量的可选密集编码器
+        sparse_encoder: 用于生成稀疏向量的可选稀疏编码器
+        batch_size: 每批处理的块数
     """
 
     def __init__(
@@ -31,21 +31,21 @@ class BatchProcessor:
         sparse_encoder: Optional[SparseEncoder] = None,
         batch_size: int = 32
     ):
-        """Initialize the batch processor
+        """初始化批处理器
 
         Args:
-            dense_encoder: Optional DenseEncoder instance
-            sparse_encoder: Optional SparseEncoder instance
-            batch_size: Number of chunks per batch (default: 32)
+            dense_encoder: 可选的 DenseEncoder 实例
+            sparse_encoder: 可选的 SparseEncoder 实例
+            batch_size: 每批的块数（默认：32）
 
         Raises:
-            ValueError: If both encoders are None or batch_size < 1
+            ValueError: 如果两个编码器都为 None 或 batch_size < 1
         """
         if dense_encoder is None and sparse_encoder is None:
-            raise ValueError("At least one encoder (dense or sparse) must be provided")
+            raise ValueError("必须提供至少一个编码器（密集或稀疏）")
 
         if batch_size < 1:
-            raise ValueError("batch_size must be at least 1")
+            raise ValueError("batch_size 必须至少为 1")
 
         self.dense_encoder = dense_encoder
         self.sparse_encoder = sparse_encoder
@@ -56,20 +56,20 @@ class BatchProcessor:
         chunks: List[Chunk],
         trace: Optional[TraceContext] = None
     ) -> List[ChunkRecord]:
-        """Process chunks in batches through encoders
+        """通过编码器批量处理块
 
         Args:
-            chunks: List of Chunk objects to process
-            trace: Optional trace context for observability
+            chunks: 要处理的 Chunk 对象列表
+            trace: 可选的跟踪上下文，用于可观测性
 
         Returns:
-            List of ChunkRecord objects with vectors populated
+            填充了向量的 ChunkRecord 对象列表
 
         Raises:
-            ValueError: If chunks list is empty
+            ValueError: 如果块列表为空
         """
         if not chunks:
-            raise ValueError("chunks list cannot be empty")
+            raise ValueError("块列表不能为空")
 
         all_records = []
         num_batches = (len(chunks) + self.batch_size - 1) // self.batch_size
@@ -81,12 +81,12 @@ class BatchProcessor:
 
             batch_start_time = time.time()
 
-            # Process batch through encoders
+            # 通过编码器处理批次
             batch_records = self._process_batch(batch_chunks, trace)
 
             batch_duration = time.time() - batch_start_time
 
-            # Log batch timing if trace is available
+            # 如果跟踪可用，记录批次时间
             if trace:
                 trace.record_stage(
                     stage_name=f"batch_{batch_idx + 1}",
@@ -107,30 +107,30 @@ class BatchProcessor:
         batch_chunks: List[Chunk],
         trace: Optional[TraceContext] = None
     ) -> List[ChunkRecord]:
-        """Process a single batch through encoders
+        """通过编码器处理单个批次
 
         Args:
-            batch_chunks: Chunks in this batch
-            trace: Optional trace context
+            batch_chunks: 此批次中的块
+            trace: 可选的跟踪上下文
 
         Returns:
-            List of ChunkRecord objects for this batch
+            此批次的 ChunkRecord 对象列表
         """
-        # Start with dense encoding if available
+        # 如果可用，从密集编码开始
         if self.dense_encoder:
             records = self.dense_encoder.encode(batch_chunks, trace=trace)
         else:
-            # Create records without dense vectors
+            # 创建不带密集向量的记录
             records = [
                 ChunkRecord.from_chunk(chunk)
                 for chunk in batch_chunks
             ]
 
-        # Add sparse encoding if available
+        # 如果可用，添加稀疏编码
         if self.sparse_encoder:
             sparse_records = self.sparse_encoder.encode(batch_chunks, trace=trace)
 
-            # Merge sparse vectors into existing records
+            # 将稀疏向量合并到现有记录中
             for record, sparse_record in zip(records, sparse_records):
                 record.sparse_vector = sparse_record.sparse_vector
 

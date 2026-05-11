@@ -1,7 +1,7 @@
 """
-Structured logging with JSON Lines format for trace persistence.
+结构化日志记录，使用 JSON Lines 格式进行追踪持久化。
 
-Provides JSON-formatted logging and trace persistence to logs/traces.jsonl.
+提供 JSON 格式的日志记录和追踪持久化到 logs/traces.jsonl。
 """
 
 import json
@@ -12,17 +12,17 @@ from datetime import datetime
 
 
 class JSONFormatter(logging.Formatter):
-    """Custom formatter that outputs log records as JSON."""
+    """自定义格式化器，将日志记录输出为 JSON 格式。"""
 
     def format(self, record: logging.LogRecord) -> str:
         """
-        Format log record as JSON string.
+        将日志记录格式化为 JSON 字符串。
 
         Args:
-            record: Log record to format
+            record: 要格式化的日志记录
 
         Returns:
-            JSON string representation of the log record
+            日志记录的 JSON 字符串表示
         """
         log_data = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
@@ -31,11 +31,11 @@ class JSONFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
 
-        # Add exception info if present
+        # 如果存在异常信息，添加到日志中
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
 
-        # Add extra fields from record
+        # 从记录中添加额外字段
         if hasattr(record, "trace_id"):
             log_data["trace_id"] = record.trace_id
         if hasattr(record, "trace_type"):
@@ -46,33 +46,33 @@ class JSONFormatter(logging.Formatter):
 
 def get_trace_logger(name: str = "trace", log_dir: str = "logs") -> logging.Logger:
     """
-    Get a logger configured for JSON Lines output.
+    获取配置为 JSON Lines 输出的日志记录器。
 
     Args:
-        name: Logger name
-        log_dir: Directory for log files
+        name: 日志记录器名称
+        log_dir: 日志文件目录
 
     Returns:
-        Configured logger instance
+        配置好的日志记录器实例
     """
     logger = logging.getLogger(name)
 
-    # Avoid adding handlers multiple times
+    # 避免重复添加处理器
     if logger.handlers:
         return logger
 
     logger.setLevel(logging.INFO)
 
-    # Create logs directory if it doesn't exist
+    # 如果日志目录不存在，创建它
     log_path = Path(log_dir)
     log_path.mkdir(parents=True, exist_ok=True)
 
-    # Add file handler with JSON formatter
+    # 添加带有 JSON 格式化器的文件处理器
     file_handler = logging.FileHandler(log_path / "traces.jsonl", encoding="utf-8")
     file_handler.setFormatter(JSONFormatter())
     logger.addHandler(file_handler)
 
-    # Prevent propagation to root logger
+    # 防止传播到根日志记录器
     logger.propagate = False
 
     return logger
@@ -80,17 +80,17 @@ def get_trace_logger(name: str = "trace", log_dir: str = "logs") -> logging.Logg
 
 def write_trace(trace_dict: Dict[str, Any], log_dir: str = "logs") -> None:
     """
-    Write a trace dictionary to logs/traces.jsonl.
+    将追踪字典写入 logs/traces.jsonl。
 
     Args:
-        trace_dict: Trace dictionary from TraceContext.to_dict()
-        log_dir: Directory for log files
+        trace_dict: 来自 TraceContext.to_dict() 的追踪字典
+        log_dir: 日志文件目录
     """
-    # Ensure logs directory exists
+    # 确保日志目录存在
     log_path = Path(log_dir)
     log_path.mkdir(parents=True, exist_ok=True)
 
-    # Append trace as JSON line
+    # 将追踪作为 JSON 行追加到文件
     trace_file = log_path / "traces.jsonl"
     with open(trace_file, "a", encoding="utf-8") as f:
         json.dump(trace_dict, f, ensure_ascii=False)
