@@ -17,7 +17,9 @@ class EmbeddingFactory:
         if not embed_class:
             raise ValueError(f"Unsupported embedding provider: {provider}")
 
-        return embed_class(**settings['embedding'])
+        # 创建配置副本并移除provider字段，避免传递给构造函数
+        embed_config = {k: v for k, v in settings['embedding'].items() if k != 'provider'}
+        return embed_class(**embed_config)
 
 # Register built-in providers
 try:

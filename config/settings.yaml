@@ -1,16 +1,25 @@
 config:
   llm:
-    provider: openai
+    provider: qwen
+    model: qwen3-max
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: sk-bde93ae2664d43ffabb2e47391081a12
+    temperature: 0.7
+    max_tokens: 2000
   embedding:
     provider: openai
+    model: text-embedding-v4
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: sk-bde93ae2664d43ffabb2e47391081a12
+    dimensions: 1536
   vector_store:
-    provider: qdrant
-    host: localhost
-    port: 6333
+    provider: chroma
     collection_name: rag_collection
-    vector_size: 1536
+    persist_directory: ./data/chroma
   retrieval:
-    top_k: 5
+    dense_top_k: 10
+    sparse_top_k: 10
+    final_top_k: 5
   storage:
     upload_directory: ./data/uploads
   observability:
