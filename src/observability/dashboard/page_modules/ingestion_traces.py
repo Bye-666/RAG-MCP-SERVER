@@ -201,12 +201,15 @@ def _render_stage_table(trace: Dict[str, Any]):
         if "doc_id" in metadata:
             metadata_str += f" | doc: {metadata['doc_id'][:8]}"
 
+        # 格式化耗时，处理 None 的情况
+        duration_str = f"{duration_ms:.2f}" if duration_ms is not None else "-"
+
         table_data.append({
             "序号": idx + 1,
             "阶段": stage_name,
             "开始时间": start_str,
             "结束时间": end_str,
-            "耗时 (ms)": f"{duration_ms:.2f}",
+            "耗时 (ms)": duration_str,
             "备注": metadata_str
         })
 

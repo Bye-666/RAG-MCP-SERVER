@@ -44,6 +44,13 @@ def _init_services():
 
         image_storage = ImageStorage()
         bm25_indexer = BM25Indexer()
+
+        # 加载现有的 BM25 索引（如果存在）
+        try:
+            bm25_indexer.load()
+        except FileNotFoundError:
+            pass  # 索引文件不存在，使用空索引
+
         file_integrity = SQLiteIntegrityChecker()
 
         # 初始化文档管理器
@@ -266,10 +273,25 @@ def _process_file(
             collection=collection
         )
 
+        # 创建追踪上下文
+        from src.core.trace.trace_context import TraceContext
+        from src.core.trace.trace_collector import TraceCollector
+
+        trace = TraceContext(trace_type="ingestion")
+        trace.metadata["file_path"] = str(file_path)
+        trace.metadata["collection"] = collection
+        trace.metadata["source"] = "dashboard"
+
+        trace_collector = TraceCollector()
+
         # 执行摄取（使用持久化路径）
         with status_container:
             with st.spinner("正在摄取文档..."):
-                result = pipeline.ingest_file(str(file_path), config=config)
+                result = pipeline.ingest_file(str(file_path), config=config, trace=trace)
+
+        # 完成并收集追踪
+        trace.finish()
+        trace_collector.collect(trace)
 
         # 显示结果
         st.markdown("---")
@@ -341,10 +363,8 @@ def _render_document_list(services: dict):
 
         with col3:
             if st.button("🗑️ 删除", key=f"delete_{idx}", type="secondary"):
-                # 确认删除
-                if f"confirm_delete_{idx}" not in st.session_state:
-                    st.session_state[f"confirm_delete_{idx}"] = True
-                    st.rerun()
+                st.session_state[f"confirm_delete_{idx}"] = True
+                st.rerun()
 
         # 确认删除对话框
         if st.session_state.get(f"confirm_delete_{idx}", False):

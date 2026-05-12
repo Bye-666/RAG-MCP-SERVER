@@ -100,6 +100,29 @@ class TraceContext:
         if metadata:
             self.metadata.update(metadata)
 
+    def log(self, component: str, message: str, metadata: Optional[Dict[str, Any]] = None):
+        """
+        记录追踪日志消息。
+
+        参数:
+            component: 组件名称（例如 "azure_vision_llm"）
+            message: 日志消息
+            metadata: 可选的附加元数据
+        """
+        # 简单实现：将日志存储在元数据中
+        if "logs" not in self.metadata:
+            self.metadata["logs"] = []
+
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "component": component,
+            "message": message
+        }
+        if metadata:
+            log_entry["metadata"] = metadata
+
+        self.metadata["logs"].append(log_entry)
+
     @property
     def total_duration_ms(self) -> Optional[float]:
         """计算总追踪持续时间（毫秒）"""

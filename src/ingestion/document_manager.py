@@ -163,10 +163,18 @@ class DocumentManager:
         )
 
         try:
-            # 1. 从向量存储获取此文档的所有块
+            # 1. 首先从完整性检查器获取 file_hash（最可靠的来源）
+            file_hash = None
+            processed_files = self.file_integrity.list_processed()
+            for file_record in processed_files:
+                if file_record.get("file_path") == source_path:
+                    file_hash = file_record.get("file_hash")
+                    break
+
+            # 2. 从向量存储获取此文档的所有块
             chunks = self.chroma_store.get_by_metadata({"source_path": source_path})
 
-            # 2. 如果块存在，从向量存储和 BM25 中删除
+            # 3. 如果块存在，从向量存储和 BM25 中删除
             if chunks:
                 chunk_ids = [chunk["id"] for chunk in chunks]
 
@@ -181,16 +189,9 @@ class DocumentManager:
                 # 保存更新的 BM25 索引
                 self.bm25_indexer.save()
 
-                # 从元数据获取 file_hash 用于完整性检查器
-                file_hash = chunks[0].get("metadata", {}).get("file_hash")
-            else:
-                # 未找到块，尝试从完整性检查器获取 file_hash
-                file_hash = None
-                processed_files = self.file_integrity.list_processed()
-                for file_record in processed_files:
-                    if file_record.get("file_path") == source_path:
-                        file_hash = file_record.get("file_hash")
-                        break
+                # 如果之前没有从完整性检查器获取到 file_hash，尝试从 metadata 获取
+                if not file_hash:
+                    file_hash = chunks[0].get("metadata", {}).get("file_hash")
 
             # 3. 删除图像
             try:

@@ -136,12 +136,14 @@ def render():
                 if isinstance(stages, dict):
                     for stage_name, stage_data in stages.items():
                         duration = stage_data.get('duration_ms', 0)
-                        st.write(f"- {stage_name}: {duration:.2f} ms")
+                        duration_str = f"{duration:.2f}" if duration is not None else "-"
+                        st.write(f"- {stage_name}: {duration_str} ms")
                 elif isinstance(stages, list):
                     for stage in stages:
                         stage_name = stage.get('stage_name', 'unknown')
                         duration = stage.get('duration_ms', 0)
-                        st.write(f"- {stage_name}: {duration:.2f} ms")
+                        duration_str = f"{duration:.2f}" if duration is not None else "-"
+                        st.write(f"- {stage_name}: {duration_str} ms")
 
             # 提供跳转提示
             if trace_type == 'ingestion':
