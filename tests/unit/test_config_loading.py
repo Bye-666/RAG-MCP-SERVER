@@ -14,7 +14,7 @@ def test_settings_loading(tmp_path):
         "retrieval": {"top_k": 5},
         "observability": {"log_level": "INFO"}
     }
-    with open(settings_path, "w") as f:
+    with open(settings_path, "w", encoding="utf-8") as f:
         yaml.dump(settings_content, f)
 
     settings = load_settings(str(settings_path))
@@ -31,7 +31,7 @@ def test_missing_section(tmp_path):
         # Missing embedding section
         "vector_store": {"provider": "chroma"}
     }
-    with open(settings_path, "w") as f:
+    with open(settings_path, "w", encoding="utf-8") as f:
         yaml.dump(settings_content, f)
 
     with pytest.raises(ValueError) as exc_info:

@@ -216,7 +216,7 @@ class TestEvalRunnerLoadTestSet:
     def test_load_test_set_invalid_json(self, tmp_path):
         """测试无效的 JSON 格式"""
         test_set_path = tmp_path / "invalid.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             f.write("invalid json {")
 
         runner = EvalRunner({}, Mock(), Mock())
@@ -227,7 +227,7 @@ class TestEvalRunnerLoadTestSet:
     def test_load_test_set_missing_test_cases(self, tmp_path):
         """测试缺少 test_cases 字段"""
         test_set_path = tmp_path / "missing_field.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             json.dump({"wrong_field": []}, f)
 
         runner = EvalRunner({}, Mock(), Mock())
@@ -251,7 +251,7 @@ class TestEvalRunnerRun:
             ]
         }
         test_set_path = tmp_path / "test_set.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             json.dump(test_set_data, f)
 
         # Mock HybridSearch
@@ -299,7 +299,7 @@ class TestEvalRunnerRun:
             ]
         }
         test_set_path = tmp_path / "test_set.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             json.dump(test_set_data, f)
 
         # Mock
@@ -330,7 +330,7 @@ class TestEvalRunnerRun:
             ]
         }
         test_set_path = tmp_path / "test_set.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             json.dump(test_set_data, f)
 
         mock_result = Mock()
@@ -356,7 +356,7 @@ class TestEvalRunnerRun:
             ]
         }
         test_set_path = tmp_path / "test_set.json"
-        with open(test_set_path, 'w') as f:
+        with open(test_set_path, 'w', encoding='utf-8') as f:
             json.dump(test_set_data, f)
 
         # Mock 检索失败

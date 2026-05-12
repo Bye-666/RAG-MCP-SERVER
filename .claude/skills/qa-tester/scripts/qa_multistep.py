@@ -370,9 +370,9 @@ def test_M05():
     backup_config()
     try:
         print("\n[Step 1] Inject YAML syntax error")
-        with open(CONFIG, "r") as f:
+        with open(CONFIG, "r", encoding="utf-8") as f:
             content = f.read()
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             f.write("invalid_yaml: {missing_bracket\n" + content)
 
         print("\n[Step 2] Run query")
@@ -408,7 +408,7 @@ def test_M06():
         with open(CONFIG) as f:
             cfg = yaml.safe_load(f)
         del cfg["embedding"]
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f)
 
         print("\n[Step 2] Run ingest")
@@ -455,7 +455,7 @@ def test_M10():
         with open(CONFIG) as f:
             cfg = yaml.safe_load(f)
         cfg["ingestion"]["chunk_size"] = 500
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f, default_flow_style=False)
 
         print("\n[Step 3] Ingest simple.pdf with chunk_size=500")
@@ -493,7 +493,7 @@ def test_M03():
         with open(CONFIG) as f:
             cfg = yaml.safe_load(f)
         cfg["llm"]["azure_endpoint"] = "https://invalid.openai.azure.com/"
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f, default_flow_style=False)
 
         print("\n[Step 2] Run ingest (will fail at Transform stage)")
@@ -530,7 +530,7 @@ def test_L07():
         cfg["rerank"]["enabled"] = True
         cfg["rerank"]["provider"] = "llm"
         cfg["llm"]["api_key"] = "invalid_key_for_rerank_test"
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f, default_flow_style=False)
 
         print("\n[Step 2] Run query")
@@ -579,7 +579,7 @@ def test_M11():
         with open(CONFIG) as f:
             cfg = yaml.safe_load(f)
         cfg["ingestion"]["chunk_overlap"] = 0
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f, default_flow_style=False)
 
         print("\n[Step 3] Ingest with chunk_overlap=0")
@@ -615,7 +615,7 @@ def test_M04():
         with open(CONFIG) as f:
             cfg = yaml.safe_load(f)
         cfg["vision_llm"]["enabled"] = False
-        with open(CONFIG, "w") as f:
+        with open(CONFIG, "w", encoding="utf-8") as f:
             yaml.dump(cfg, f, default_flow_style=False)
 
         print("\n[Step 2] Ingest with_images.pdf (has 1 image)")

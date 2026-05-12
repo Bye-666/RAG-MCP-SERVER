@@ -14,7 +14,12 @@ class OpenAIEmbedding(BaseEmbedding):
             client_kwargs["base_url"] = api_base
         self.client = OpenAI(**client_kwargs)
         self.model = model
-        self.batch_size = kwargs.get("batch_size", 100)  # OpenAI 推荐最大为 2048，但小批量更稳定
+
+        # 根据模型自动设置批次大小
+        # text-embedding-v4 (阿里云) 限制为 10
+        # OpenAI 模型推荐最大为 2048，但小批量更稳定
+        default_batch_size = 10 if "v4" in model or "v3" in model or "v2" in model else 100
+        self.batch_size = kwargs.get("batch_size", default_batch_size)
 
     def embed(self, texts: List[str], **kwargs) -> List[List[float]]:
         embeddings = []

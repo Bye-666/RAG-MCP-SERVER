@@ -29,14 +29,14 @@ class BatchProcessor:
         self,
         dense_encoder: Optional[DenseEncoder] = None,
         sparse_encoder: Optional[SparseEncoder] = None,
-        batch_size: int = 32
+        batch_size: int = 10
     ):
         """初始化批处理器
 
         Args:
             dense_encoder: 可选的 DenseEncoder 实例
             sparse_encoder: 可选的 SparseEncoder 实例
-            batch_size: 每批的块数（默认：32）
+            batch_size: 每批的块数（默认：10，适配大多数 embedding 模型的限制）
 
         Raises:
             ValueError: 如果两个编码器都为 None 或 batch_size < 1

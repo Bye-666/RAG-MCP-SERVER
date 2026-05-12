@@ -12,6 +12,7 @@ config:
     api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
     api_key: sk-bde93ae2664d43ffabb2e47391081a12
     dimensions: 1536
+    batch_size: 10  # text-embedding-v4 的批次大小限制
   vector_store:
     provider: chroma
     collection_name: rag_collection

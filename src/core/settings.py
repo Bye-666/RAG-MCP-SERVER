@@ -32,7 +32,7 @@ class Settings:
 
 
 def load_settings(path: str = "config/settings.yaml") -> Settings:
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     # 如果存在配置包装器，则处理
