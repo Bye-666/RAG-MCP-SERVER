@@ -127,6 +127,7 @@ class IngestionPipeline:
             "error": None
         }
 
+        file_hash = None  # 初始化，避免异常处理时访问未定义变量
         try:
             # 阶段 1: 完整性检查
             self._report_progress("integrity_check", 0, 1)
@@ -260,7 +261,8 @@ class IngestionPipeline:
 
         except Exception as e:
             result["error"] = str(e)
-            self.integrity_checker.mark_failed(file_hash, str(e))
+            if file_hash:  # 只有在 file_hash 已计算时才标记失败
+                self.integrity_checker.mark_failed(file_hash, str(e))
             self._report_progress("failed", 0, 1)
             raise
 
@@ -278,11 +280,13 @@ class IngestionPipeline:
             directory_path: 目录路径
             pattern: 文件模式（默认: *.pdf）
             config: 管道配置
-            trace: 可选的跟踪上下文
+            trace: 可选的跟踪上下文（已弃用，每个文件会创建独立的 trace）
 
         Returns:
             每个文件的摄取结果列表
         """
+        from src.core.trace.trace_collector import TraceCollector
+
         directory = Path(directory_path)
         if not directory.exists():
             raise FileNotFoundError(f"目录未找到: {directory_path}")
@@ -290,9 +294,22 @@ class IngestionPipeline:
         files = list(directory.glob(pattern))
         results = []
 
+        # 创建 trace collector 用于收集所有文件的追踪
+        trace_collector = TraceCollector()
+
         for file_path in files:
             try:
-                result = self.ingest_file(str(file_path), config=config, trace=trace)
+                # 为每个文件创建独立的 trace
+                file_trace = TraceContext(trace_type="ingestion")
+                file_trace.metadata["file_path"] = str(file_path)
+                file_trace.metadata["collection"] = config.collection if config else "default"
+
+                result = self.ingest_file(str(file_path), config=config, trace=file_trace)
+
+                # 完成并收集 trace
+                file_trace.finish()
+                trace_collector.collect(file_trace)
+
                 results.append(result)
             except Exception as e:
                 results.append({

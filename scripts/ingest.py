@@ -29,6 +29,8 @@ from src.libs.loader.file_integrity import SQLiteIntegrityChecker
 from src.libs.loader.pdf_loader import PdfLoader
 from src.ingestion.chunking.document_chunker import DocumentChunker
 from src.core.settings import load_settings
+from src.core.trace.trace_context import TraceContext
+from src.core.trace.trace_collector import TraceCollector
 
 
 def create_pipeline(settings) -> IngestionPipeline:
@@ -47,27 +49,28 @@ def create_pipeline(settings) -> IngestionPipeline:
     chunker = DocumentChunker(settings=settings)
 
     # Create pipeline with progress callback
-    def on_progress(stage: str, details: dict):
+    def on_progress(stage: str, current: int, total: int):
         if stage == "integrity_check":
-            print(f"Checking file: {details.get('file', '')}")
-        elif stage == "skipped":
-            print(f"  [SKIP] Already processed")
+            print(f"  [CHECK] Checking file integrity...")
         elif stage == "load":
             print(f"  [LOAD] Loading document...")
         elif stage == "split":
             print(f"  [SPLIT] Splitting into chunks...")
         elif stage == "transform":
-            print(f"  [TRANSFORM] {details.get('name', '')}")
+            print(f"  [TRANSFORM] Applying transformations ({current}/{total})...")
         elif stage == "encode":
-            print(f"  [ENCODE] Encoding {details.get('chunk_count', 0)} chunks...")
-        elif stage == "store_vectors":
-            print(f"  [STORE] Storing {details.get('count', 0)} vectors...")
-        elif stage == "store_bm25":
-            print(f"  [INDEX] Building BM25 index for {details.get('count', 0)} chunks...")
+            if total > 0:
+                print(f"  [ENCODE] Encoding chunks ({current}/{total})...")
+        elif stage == "upsert":
+            if total > 0:
+                print(f"  [STORE] Storing vectors ({current}/{total})...")
+        elif stage == "bm25_index":
+            if total > 0:
+                print(f"  [INDEX] Building BM25 index ({current}/{total})...")
         elif stage == "completed":
-            print(f"  [OK] Completed: {details.get('chunk_count', 0)} chunks processed")
+            print(f"  [OK] Completed successfully")
         elif stage == "failed":
-            print(f"  [ERROR] Failed: {details.get('error', '')}")
+            print(f"  [ERROR] Processing failed")
 
     pipeline = IngestionPipeline(
         integrity_checker=integrity_checker,
@@ -135,6 +138,9 @@ def main():
         force_reprocess=args.force
     )
 
+    # Create trace collector
+    trace_collector = TraceCollector()
+
     # Process files
     print(f"\n{'='*60}")
     print(f"Ingestion started")
@@ -146,7 +152,17 @@ def main():
         if path.is_file():
             # Single file ingestion
             print(f"Processing file: {path}")
-            result = pipeline.ingest_file(str(path), config=config)
+
+            # Create trace context
+            trace = TraceContext(trace_type="ingestion")
+            trace.metadata["file_path"] = str(path)
+            trace.metadata["collection"] = args.collection
+
+            result = pipeline.ingest_file(str(path), config=config, trace=trace)
+
+            # Finish and collect trace
+            trace.finish()
+            trace_collector.collect(trace)
 
             if result.get("error"):
                 print(f"\n[ERROR] Ingestion failed: {result['error']}", file=sys.stderr)
