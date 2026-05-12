@@ -397,7 +397,19 @@ def render():
     """渲染 Ingestion 管理页面"""
     st.title("📥 Ingestion 管理")
     st.markdown("上传文档、触发摄取、管理已有文档")
-    st.markdown("---")
+
+    # 添加清除缓存按钮
+    col1, col2 = st.columns([6, 1])
+    with col1:
+        st.markdown("---")
+    with col2:
+        if st.button("🔄 清除缓存", help="重新加载配置和服务实例"):
+            if "ingestion_services" in st.session_state:
+                del st.session_state["ingestion_services"]
+            if "hybrid_search" in st.session_state:
+                del st.session_state["hybrid_search"]
+            st.success("缓存已清除")
+            st.rerun()
 
     # 初始化服务
     try:

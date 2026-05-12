@@ -14,6 +14,15 @@ def render():
     """渲染查询测试页面"""
     st.title("🧪 查询测试")
     st.markdown("交互式查询测试工具 - 测试检索效果")
+
+    # 添加刷新按钮
+    col1, col2 = st.columns([6, 1])
+    with col2:
+        if st.button("🔄 刷新索引", help="重新加载索引数据，删除文档后需要点击此按钮"):
+            if 'hybrid_search' in st.session_state:
+                del st.session_state.hybrid_search
+            st.rerun()
+
     st.markdown("---")
 
     # 初始化HybridSearch
